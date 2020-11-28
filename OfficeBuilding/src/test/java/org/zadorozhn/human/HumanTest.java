@@ -1,0 +1,86 @@
+package org.zadorozhn.human;
+
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
+import org.mockito.Mock;
+import org.mockito.Mockito;
+import org.mockito.internal.matchers.Null;
+import org.zadorozhn.building.Building;
+import org.zadorozhn.building.Call;
+import org.zadorozhn.building.Floor;
+import org.zadorozhn.human.Human;
+
+import static org.junit.jupiter.api.Assertions.*;
+import static org.hamcrest.MatcherAssert.*;
+import static org.hamcrest.Matchers.*;
+
+class HumanTest {
+    public static final int VALID_WEIGHT = 60;
+    public static final int INVALID_WEIGHT = 300;
+    public static final int INVALID_NEGATIVE_WEIGHT = -1;
+    public static final int VALID_TARGET_FLOOR_NUMBER = 5;
+    public static final int INVALID_TARGET_FLOOR_NUMBER = -1;
+    public static final int VALID_START_FLOOR_NUMBER = 3;
+    public static final int NUMBER_OF_FLOORS = 10;
+    public static Building building;
+
+    @BeforeEach
+    void init(){
+        building = Building.of(NUMBER_OF_FLOORS);
+    }
+
+    static final Object[][] getInvalidHumanCharacteristicsData(){
+        return new Object[][]{
+                {VALID_WEIGHT, INVALID_TARGET_FLOOR_NUMBER},
+                {INVALID_WEIGHT, VALID_TARGET_FLOOR_NUMBER},
+                {INVALID_WEIGHT, INVALID_TARGET_FLOOR_NUMBER},
+                {INVALID_NEGATIVE_WEIGHT, INVALID_TARGET_FLOOR_NUMBER},
+                {INVALID_NEGATIVE_WEIGHT, VALID_TARGET_FLOOR_NUMBER}
+        };
+    }
+
+    @Test
+    void createValidHumanTest() {
+        assertDoesNotThrow(() -> Human.of(VALID_WEIGHT,
+                VALID_TARGET_FLOOR_NUMBER, building.getFloor(VALID_START_FLOOR_NUMBER)));
+    }
+
+    @ParameterizedTest
+    @MethodSource("getInvalidHumanCharacteristicsData")
+    void createInvalidHumanTest(int weight, int targetFloor) {
+        assertThrows(IllegalArgumentException.class,
+                () -> Human.of(weight, targetFloor, building.getFloor(VALID_START_FLOOR_NUMBER)));
+    }
+
+    @Test
+    void getWeightTest() {
+        Human human = Human.of(VALID_WEIGHT, VALID_TARGET_FLOOR_NUMBER, building.getFloor(VALID_START_FLOOR_NUMBER));
+
+        assertThat(human.getWeight(), equalTo(VALID_WEIGHT));
+    }
+
+    @Test
+    void getTargetFloorNumberTest() {
+        Human human = Human.of(VALID_WEIGHT, VALID_TARGET_FLOOR_NUMBER, building.getFloor(VALID_START_FLOOR_NUMBER));
+
+        assertThat(human.getCall().getTargetFloorNumber(), equalTo(VALID_TARGET_FLOOR_NUMBER));
+    }
+
+    @Test
+    void getCallTest(){
+        Human human = Human.of(VALID_WEIGHT, VALID_TARGET_FLOOR_NUMBER, building.getFloor(VALID_START_FLOOR_NUMBER));
+
+        assertThat(human.getCall(),
+                equalTo(Call.of(VALID_TARGET_FLOOR_NUMBER, building.getFloor(VALID_START_FLOOR_NUMBER))));
+    }
+
+    @Test
+    void getSsnTest(){
+        Human human = Human.of(VALID_WEIGHT, VALID_TARGET_FLOOR_NUMBER, building.getFloor(VALID_START_FLOOR_NUMBER));
+
+        assertThat(human.getSsn(), notNullValue());
+    }
+}

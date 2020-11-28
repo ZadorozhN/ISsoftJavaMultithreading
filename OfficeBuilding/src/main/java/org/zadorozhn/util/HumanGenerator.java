@@ -1,0 +1,86 @@
+package org.zadorozhn.util;
+
+import lombok.Getter;
+import lombok.SneakyThrows;
+import org.zadorozhn.building.Building;
+import org.zadorozhn.building.Floor;
+import org.zadorozhn.human.Human;
+import org.zadorozhn.util.interrupt.Interruptable;
+
+import java.util.Random;
+import java.util.concurrent.TimeUnit;
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
+
+public class HumanGenerator implements Runnable, Interruptable {
+    public final static int DEFAULT_OPERATION_TIME = 1100;
+    public final static int MIN_SPEED = 100;
+    public final static int MAX_SPEED = 1000;
+
+    private final Building building;
+    private final int generateSpeed;
+    private final int weightFrom;
+    private final int weightTo;
+
+    @Getter
+    public boolean isRunning;
+
+    private HumanGenerator(Building building, int weightFrom, int weightTo, int generateSpeed) {
+        checkArgument(generateSpeed >= MIN_SPEED && generateSpeed <= MAX_SPEED);
+        checkArgument(weightFrom >= Human.MIN_WEIGHT);
+        checkArgument(weightTo <= Human.MAX_WEIGHT);
+        checkArgument(weightTo >= weightFrom);
+        checkNotNull(building);
+
+        this.generateSpeed = generateSpeed;
+        this.weightFrom = weightFrom;
+        this.building = building;
+        this.weightTo = weightTo;
+    }
+
+    public static HumanGenerator of(Building building, int weightFrom, int weightTo, int generateSpeed) {
+        return new HumanGenerator(building, weightFrom, weightTo, generateSpeed);
+    }
+
+    public static HumanGenerator of(Building building, int weightFrom, int weightTo) {
+        return new HumanGenerator(building, weightFrom, weightTo, MIN_SPEED);
+    }
+
+    public static HumanGenerator of(Building building) {
+        return new HumanGenerator(building, Human.MIN_WEIGHT, Human.MAX_WEIGHT, MIN_SPEED);
+    }
+
+    @SneakyThrows
+    public void generate() {
+        Random random = new Random();
+        Floor floor = building.getFloor(Math.abs(random.nextInt()) % building.getNumberOfFloors());
+        int weight = Math.abs(random.nextInt()) % (weightTo - weightFrom) + weightFrom;
+        int targetFloor;
+
+        do {
+            targetFloor = Math.abs(random.nextInt()) % building.getNumberOfFloors();
+        } while (targetFloor == floor.getFloorNumber());
+
+        floor.addHuman(Human.of(weight, targetFloor, floor));
+
+        StatisticsHolder.getInstance().getNumberOfGeneratedPeople();
+
+        TimeUnit.MILLISECONDS.sleep(DEFAULT_OPERATION_TIME - generateSpeed);
+    }
+
+    public void turnOff() {
+        isRunning = false;
+    }
+
+    public void turnOn() {
+        isRunning = true;
+    }
+
+    @Override
+    public void run() {
+        turnOn();
+        while (isRunning) {
+            generate();
+        }
+    }
+}
