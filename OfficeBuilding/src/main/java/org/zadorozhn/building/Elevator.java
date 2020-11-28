@@ -87,6 +87,24 @@ public class Elevator implements Runnable, Interruptable {
         return new Elevator(capacity, startFloorNumber, moveSpeed, doorWorkSpeed);
     }
 
+    public static Elevator of(int capacity, Floor startFloor) {
+        checkNotNull(startFloor);
+
+        return new Elevator(capacity, startFloor.getFloorNumber(), MIN_SPEED, MIN_SPEED);
+    }
+
+    public static Elevator of(int capacity, Floor startFloor, int speed) {
+        checkNotNull(startFloor);
+
+        return new Elevator(capacity, startFloor.getFloorNumber(), speed, speed);
+    }
+
+    public static Elevator of(int capacity, Floor startFloor, int moveSpeed, int doorWorkSpeed) {
+        checkNotNull(startFloor);
+
+        return new Elevator(capacity, startFloor.getFloorNumber(), moveSpeed, doorWorkSpeed);
+    }
+
     public void addTo(Building building) {
         checkNotNull(building);
 

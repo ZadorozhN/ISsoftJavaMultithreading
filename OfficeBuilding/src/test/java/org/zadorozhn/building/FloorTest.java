@@ -1,5 +1,6 @@
 package org.zadorozhn.building;
 
+import org.checkerframework.common.returnsreceiver.qual.This;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -13,8 +14,6 @@ import static org.hamcrest.MatcherAssert.*;
 
 class FloorTest {
     public static final int VALID_FLOOR_NUMBER = 1;
-    public static final int VALID_FIRST_TARGET_FLOOR_NUMBER = 2;
-    public static final int VALID_SECOND_TARGET_FLOOR_NUMBER = 3;
     public static final int VALID_WEIGHT = 60;
     public static final int VALID_ELEVATOR_CAPACITY = 500;
     public static final int INVALID_FLOOR_NUMBER = -1;
@@ -42,8 +41,10 @@ class FloorTest {
     @Test
     void pollFirstHumanTest(){
         Floor floor = building.getFloor(VALID_FLOOR_NUMBER);
-        Human firstHuman = Human.of(VALID_WEIGHT, VALID_FIRST_TARGET_FLOOR_NUMBER, floor);
-        Human secondHuman = Human.of(VALID_WEIGHT, VALID_SECOND_TARGET_FLOOR_NUMBER, floor);
+        Floor firstUpperFloor = building.getFloor(VALID_FLOOR_NUMBER + 1);
+        Floor secondUpperFloor = building.getFloor(VALID_FLOOR_NUMBER + 2);
+        Human firstHuman = Human.of(VALID_WEIGHT, firstUpperFloor, floor);
+        Human secondHuman = Human.of(VALID_WEIGHT, secondUpperFloor, floor);
 
         floor.addHuman(firstHuman);
         floor.addHuman(secondHuman);
@@ -76,7 +77,8 @@ class FloorTest {
     @Test
     void addHumanTest(){
         Floor floor = building.getFloor(VALID_FLOOR_NUMBER);
-        Human firstHuman = Human.of(VALID_WEIGHT, VALID_FIRST_TARGET_FLOOR_NUMBER, floor);
+        Floor firstUpperFloor = building.getFloor(VALID_FLOOR_NUMBER + 1);
+        Human firstHuman = Human.of(VALID_WEIGHT, firstUpperFloor, floor);
 
         floor.addHuman(firstHuman);
 
@@ -97,8 +99,10 @@ class FloorTest {
     @Test
     void getFirstHumanTest(){
         Floor floor = building.getFloor(VALID_FLOOR_NUMBER);
-        Human firstHuman = Human.of(VALID_WEIGHT, VALID_FIRST_TARGET_FLOOR_NUMBER, floor);
-        Human secondHuman = Human.of(VALID_WEIGHT, VALID_SECOND_TARGET_FLOOR_NUMBER, floor);
+        Floor firstUpperFloor = building.getFloor(VALID_FLOOR_NUMBER + 1);
+        Floor secondUpperFloor = building.getFloor(VALID_FLOOR_NUMBER + 2);
+        Human firstHuman = Human.of(VALID_WEIGHT, firstUpperFloor, floor);
+        Human secondHuman = Human.of(VALID_WEIGHT, secondUpperFloor, floor);
 
         floor.addHuman(firstHuman);
         floor.addHuman(secondHuman);
@@ -111,10 +115,139 @@ class FloorTest {
     }
 
     @Test
+    void getHumanQueueWithDifferentDirectionTest(){
+        Floor floor = building.getFloor(VALID_FLOOR_NUMBER);
+        Floor firstUpperFloor = building.getFloor(VALID_FLOOR_NUMBER + 1);
+        Human firstHuman = Human.of(VALID_WEIGHT, firstUpperFloor, floor);
+        Human secondHuman = Human.of(VALID_WEIGHT, firstUpperFloor, floor);
+        Direction anotherDirection = Call.of(floor, firstUpperFloor).getDirection();
+
+        floor.addHuman(firstHuman);
+        floor.addHuman(secondHuman);
+
+        assertThat(floor.getHumanQueue(anotherDirection), not(hasItems(firstHuman, secondHuman)));
+    }
+
+    @Test
+    void getHumanQueueFromTheLongestQueueTest(){
+        Floor floor = building.getFloor(VALID_FLOOR_NUMBER);
+        Floor upperFloor = building.getFloor(VALID_FLOOR_NUMBER + 1);
+        Floor lowerFloor = building.getFloor(VALID_FLOOR_NUMBER - 1);
+        Human firstHuman = Human.of(VALID_WEIGHT, upperFloor, floor);
+        Human secondHuman = Human.of(VALID_WEIGHT, upperFloor, floor);
+        Human thirdHuman = Human.of(VALID_WEIGHT, lowerFloor, floor);
+
+        floor.addHuman(firstHuman);
+        floor.addHuman(secondHuman);
+        floor.addHuman(thirdHuman);
+
+        assertThat(floor.getHumanQueue(Direction.NONE), hasItems(firstHuman, secondHuman));
+        assertThat(floor.getHumanQueue(Direction.NONE), not(hasItems(thirdHuman)));
+    }
+
+    @Test
+    void getFirstHumanFromTheLongestQueueTest(){
+        Floor floor = building.getFloor(VALID_FLOOR_NUMBER);
+        Floor upperFloor = building.getFloor(VALID_FLOOR_NUMBER + 1);
+        Floor lowerFloor = building.getFloor(VALID_FLOOR_NUMBER - 1);
+        Human firstHuman = Human.of(VALID_WEIGHT, upperFloor, floor);
+        Human secondHuman = Human.of(VALID_WEIGHT, upperFloor, floor);
+        Human thirdHuman = Human.of(VALID_WEIGHT, lowerFloor, floor);
+
+        floor.addHuman(firstHuman);
+        floor.addHuman(secondHuman);
+        floor.addHuman(thirdHuman);
+
+        assertThat(floor.getFirstHuman(Direction.NONE), equalTo(firstHuman));
+    }
+
+    @Test
+    void getFirstHumanFromTheUpQueueTest(){
+        Floor floor = building.getFloor(VALID_FLOOR_NUMBER);
+        Floor upperFloor = building.getFloor(VALID_FLOOR_NUMBER + 1);
+        Floor lowerFloor = building.getFloor(VALID_FLOOR_NUMBER - 1);
+        Human firstHuman = Human.of(VALID_WEIGHT, upperFloor, floor);
+        Human secondHuman = Human.of(VALID_WEIGHT, upperFloor, floor);
+        Human thirdHuman = Human.of(VALID_WEIGHT, lowerFloor, floor);
+
+        floor.addHuman(firstHuman);
+        floor.addHuman(secondHuman);
+        floor.addHuman(thirdHuman);
+
+        assertThat(floor.getFirstHuman(Direction.UP), equalTo(firstHuman));
+    }
+
+    @Test
+    void getFirstHumanFromTheDownQueueTest(){
+        Floor floor = building.getFloor(VALID_FLOOR_NUMBER);
+        Floor upperFloor = building.getFloor(VALID_FLOOR_NUMBER + 1);
+        Floor lowerFloor = building.getFloor(VALID_FLOOR_NUMBER - 1);
+        Human firstHuman = Human.of(VALID_WEIGHT, upperFloor, floor);
+        Human secondHuman = Human.of(VALID_WEIGHT, upperFloor, floor);
+        Human thirdHuman = Human.of(VALID_WEIGHT, lowerFloor, floor);
+
+        floor.addHuman(firstHuman);
+        floor.addHuman(secondHuman);
+        floor.addHuman(thirdHuman);
+
+        assertThat(floor.getFirstHuman(Direction.DOWN), equalTo(thirdHuman));
+    }
+
+    @Test
+    void pollFirstHumanFromTheLongestQueueTest(){
+        Floor floor = building.getFloor(VALID_FLOOR_NUMBER);
+        Floor upperFloor = building.getFloor(VALID_FLOOR_NUMBER + 1);
+        Floor lowerFloor = building.getFloor(VALID_FLOOR_NUMBER - 1);
+        Human firstHuman = Human.of(VALID_WEIGHT, upperFloor, floor);
+        Human secondHuman = Human.of(VALID_WEIGHT, upperFloor, floor);
+        Human thirdHuman = Human.of(VALID_WEIGHT, lowerFloor, floor);
+
+        floor.addHuman(firstHuman);
+        floor.addHuman(secondHuman);
+        floor.addHuman(thirdHuman);
+
+        assertThat(floor.pollFirstHuman(Direction.NONE), equalTo(firstHuman));
+    }
+
+    @Test
+    void pollFirstHumanFromTheUpQueueTest(){
+        Floor floor = building.getFloor(VALID_FLOOR_NUMBER);
+        Floor upperFloor = building.getFloor(VALID_FLOOR_NUMBER + 1);
+        Floor lowerFloor = building.getFloor(VALID_FLOOR_NUMBER - 1);
+        Human firstHuman = Human.of(VALID_WEIGHT, upperFloor, floor);
+        Human secondHuman = Human.of(VALID_WEIGHT, upperFloor, floor);
+        Human thirdHuman = Human.of(VALID_WEIGHT, lowerFloor, floor);
+
+        floor.addHuman(firstHuman);
+        floor.addHuman(secondHuman);
+        floor.addHuman(thirdHuman);
+
+        assertThat(floor.pollFirstHuman(Direction.UP), equalTo(firstHuman));
+    }
+
+    @Test
+    void poolFirstHumanFromTheDownQueueTest(){
+        Floor floor = building.getFloor(VALID_FLOOR_NUMBER);
+        Floor upperFloor = building.getFloor(VALID_FLOOR_NUMBER + 1);
+        Floor lowerFloor = building.getFloor(VALID_FLOOR_NUMBER - 1);
+        Human firstHuman = Human.of(VALID_WEIGHT, upperFloor, floor);
+        Human secondHuman = Human.of(VALID_WEIGHT, upperFloor, floor);
+        Human thirdHuman = Human.of(VALID_WEIGHT, lowerFloor, floor);
+
+        floor.addHuman(firstHuman);
+        floor.addHuman(secondHuman);
+        floor.addHuman(thirdHuman);
+
+        assertThat(floor.pollFirstHuman(Direction.DOWN), equalTo(thirdHuman));
+    }
+
+    @Test
     void getNumberOfPeopleTest(){
         Floor floor = building.getFloor(VALID_FLOOR_NUMBER);
-        Human firstHuman = Human.of(VALID_WEIGHT, VALID_FIRST_TARGET_FLOOR_NUMBER, floor);
-        Human secondHuman = Human.of(VALID_WEIGHT, VALID_SECOND_TARGET_FLOOR_NUMBER, floor);
+        Floor firstUpperFloor = building.getFloor(VALID_FLOOR_NUMBER + 1);
+        Floor secondUpperFloor = building.getFloor(VALID_FLOOR_NUMBER + 2);
+        Human firstHuman = Human.of(VALID_WEIGHT, firstUpperFloor, floor);
+        Human secondHuman = Human.of(VALID_WEIGHT, secondUpperFloor, floor);
 
         floor.addHuman(firstHuman);
         floor.addHuman(secondHuman);
@@ -125,10 +258,60 @@ class FloorTest {
     }
 
     @Test
+    void getNumberOfPeopleFromTheLongestQueueTest(){
+        Floor floor = building.getFloor(VALID_FLOOR_NUMBER);
+        Floor upperFloor = building.getFloor(VALID_FLOOR_NUMBER + 1);
+        Floor lowerFloor = building.getFloor(VALID_FLOOR_NUMBER - 1);
+        Human firstHuman = Human.of(VALID_WEIGHT, upperFloor, floor);
+        Human secondHuman = Human.of(VALID_WEIGHT, upperFloor, floor);
+        Human thirdHuman = Human.of(VALID_WEIGHT, lowerFloor, floor);
+
+        floor.addHuman(firstHuman);
+        floor.addHuman(secondHuman);
+        floor.addHuman(thirdHuman);
+
+        assertThat(floor.getNumberOfPeople(Direction.NONE), equalTo(2));
+    }
+
+    @Test
+    void getNumberOfPeopleFromUpQueueTest(){
+        Floor floor = building.getFloor(VALID_FLOOR_NUMBER);
+        Floor upperFloor = building.getFloor(VALID_FLOOR_NUMBER + 1);
+        Floor lowerFloor = building.getFloor(VALID_FLOOR_NUMBER - 1);
+        Human firstHuman = Human.of(VALID_WEIGHT, upperFloor, floor);
+        Human secondHuman = Human.of(VALID_WEIGHT, upperFloor, floor);
+        Human thirdHuman = Human.of(VALID_WEIGHT, lowerFloor, floor);
+
+        floor.addHuman(firstHuman);
+        floor.addHuman(secondHuman);
+        floor.addHuman(thirdHuman);
+
+        assertThat(floor.getNumberOfPeople(Direction.UP), equalTo(2));
+    }
+
+    @Test
+    void getNumberOfPeopleFromDownQueueTest(){
+        Floor floor = building.getFloor(VALID_FLOOR_NUMBER);
+        Floor upperFloor = building.getFloor(VALID_FLOOR_NUMBER + 1);
+        Floor lowerFloor = building.getFloor(VALID_FLOOR_NUMBER - 1);
+        Human firstHuman = Human.of(VALID_WEIGHT, upperFloor, floor);
+        Human secondHuman = Human.of(VALID_WEIGHT, upperFloor, floor);
+        Human thirdHuman = Human.of(VALID_WEIGHT, lowerFloor, floor);
+
+        floor.addHuman(firstHuman);
+        floor.addHuman(secondHuman);
+        floor.addHuman(thirdHuman);
+
+        assertThat(floor.getNumberOfPeople(Direction.DOWN), equalTo(1));
+    }
+
+    @Test
     void getHumanQueueTest() {
         Floor floor = building.getFloor(VALID_FLOOR_NUMBER);
-        Human firstHuman = Human.of(VALID_WEIGHT, VALID_FIRST_TARGET_FLOOR_NUMBER, floor);
-        Human secondHuman = Human.of(VALID_WEIGHT, VALID_SECOND_TARGET_FLOOR_NUMBER, floor);
+        Floor firstUpperFloor = building.getFloor(VALID_FLOOR_NUMBER + 1);
+        Floor secondUpperFloor = building.getFloor(VALID_FLOOR_NUMBER + 2);
+        Human firstHuman = Human.of(VALID_WEIGHT, firstUpperFloor, floor);
+        Human secondHuman = Human.of(VALID_WEIGHT, secondUpperFloor, floor);
 
         floor.addHuman(firstHuman);
         floor.addHuman(secondHuman);

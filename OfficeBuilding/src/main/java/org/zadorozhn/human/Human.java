@@ -37,6 +37,13 @@ public class Human {
         return new Human(weight, targetFloorNumber, startFloor);
     }
 
+    public static Human of(int weight, Floor targetFloor, Floor startFloor) {
+        checkNotNull(targetFloor);
+        checkArgument(!targetFloor.equals(startFloor));
+
+        return new Human(weight, targetFloor.getFloorNumber(), startFloor);
+    }
+
     public void pushButton() {
         startFloor.callElevator(call.getDirection());
     }
