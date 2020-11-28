@@ -1,18 +1,13 @@
 package org.zadorozhn.human;
 
-import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.MethodSource;
-import org.mockito.Mock;
-import org.mockito.Mockito;
-import org.mockito.internal.matchers.Null;
 import org.zadorozhn.building.Building;
 import org.zadorozhn.building.Call;
 import org.zadorozhn.building.Controller;
 import org.zadorozhn.building.Floor;
-import org.zadorozhn.human.Human;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.hamcrest.MatcherAssert.*;

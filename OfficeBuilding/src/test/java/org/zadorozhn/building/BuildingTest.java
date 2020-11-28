@@ -6,7 +6,6 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.zadorozhn.human.Human;
 import org.zadorozhn.util.HumanGenerator;
-
 import java.util.concurrent.TimeUnit;
 import java.util.stream.IntStream;
 

@@ -4,7 +4,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
-import org.mockito.internal.matchers.Null;
 import org.zadorozhn.building.state.Direction;
 import org.zadorozhn.building.state.State;
 import org.zadorozhn.human.Human;
@@ -136,13 +135,21 @@ public class ElevatorTest {
 
     @Test
     void createValidElevatorTest() {
-        assertDoesNotThrow(() -> Elevator.of(VALID_CAPACITY));
+        Elevator elevator = Elevator.of(VALID_CAPACITY);
+
+        assertThat(elevator.getCapacity(), equalTo(VALID_CAPACITY));
+        assertThat(elevator.getMoveSpeed(), equalTo(Elevator.MIN_SPEED));
+        assertThat(elevator.getDoorWorkSpeed(), equalTo(Elevator.MIN_SPEED));
+        assertThat(elevator.getCurrentFloorNumber(), equalTo(Floor.GROUND_FLOOR));
     }
 
     @Test
     void createValidElevatorWithStartFloorTest() {
         Elevator elevator = Elevator.of(VALID_CAPACITY, VALID_FLOOR_NUMBER);
 
+        assertThat(elevator.getCurrentFloorNumber(), equalTo(VALID_FLOOR_NUMBER));
+        assertThat(elevator.getMoveSpeed(), equalTo(Elevator.MIN_SPEED));
+        assertThat(elevator.getDoorWorkSpeed(), equalTo(Elevator.MIN_SPEED));
         assertThat(elevator.getCurrentFloorNumber(), equalTo(VALID_FLOOR_NUMBER));
     }
 
@@ -153,6 +160,7 @@ public class ElevatorTest {
         assertThat(elevator.getCurrentFloorNumber(), equalTo(VALID_FLOOR_NUMBER));
         assertThat(elevator.getDoorWorkSpeed(), equalTo(VALID_MOVE_SPEED));
         assertThat(elevator.getMoveSpeed(), equalTo(VALID_MOVE_SPEED));
+        assertThat(elevator.getCurrentFloorNumber(), equalTo(VALID_FLOOR_NUMBER));
     }
 
     @Test
@@ -162,6 +170,7 @@ public class ElevatorTest {
         assertThat(elevator.getCurrentFloorNumber(), equalTo(VALID_FLOOR_NUMBER));
         assertThat(elevator.getDoorWorkSpeed(), equalTo(VALID_DOOR_WORK_SPEED));
         assertThat(elevator.getMoveSpeed(), equalTo(VALID_MOVE_SPEED));
+        assertThat(elevator.getCurrentFloorNumber(), equalTo(VALID_FLOOR_NUMBER));
     }
 
     @ParameterizedTest

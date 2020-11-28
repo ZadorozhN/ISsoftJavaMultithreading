@@ -7,7 +7,6 @@ import org.zadorozhn.building.Building;
 import org.zadorozhn.building.Controller;
 import org.zadorozhn.building.state.Direction;
 import org.zadorozhn.human.Human;
-
 import java.util.stream.IntStream;
 
 import static org.hamcrest.MatcherAssert.*;
