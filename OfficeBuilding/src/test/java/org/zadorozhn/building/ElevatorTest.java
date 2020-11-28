@@ -4,6 +4,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.mockito.internal.matchers.Null;
 import org.zadorozhn.building.state.Direction;
 import org.zadorozhn.building.state.State;
 import org.zadorozhn.human.Human;
@@ -261,6 +262,14 @@ public class ElevatorTest {
         assertThat(elevator.getDirection(), equalTo(human.getCall().getDirection()));
     }
 
+    @Test
+    void pickUpNullHumanTest() {
+        Elevator elevator = Elevator.of(VALID_CAPACITY, VALID_FLOOR_NUMBER);
+        building.addElevator(elevator);
+
+        assertThrows(NullPointerException.class, () -> elevator.pickUpHuman(null));
+    }
+
     @ParameterizedTest
     @MethodSource("getDisembarkHumanTestData")
     void disembarkHumanTest(int weight, int targetFloor, int startFloor) {
@@ -274,6 +283,14 @@ public class ElevatorTest {
         elevator.disembark(human);
 
         assertThat(elevator.getPassengers(), not(contains(human)));
+    }
+
+    @Test
+    void disembarkNullHumanTest() {
+        Elevator elevator = Elevator.of(VALID_CAPACITY, VALID_FLOOR_NUMBER);
+        building.addElevator(elevator);
+
+        assertThrows(NullPointerException.class, () -> elevator.disembark(null));
     }
 
     @ParameterizedTest
@@ -368,11 +385,9 @@ public class ElevatorTest {
     void loadWithoutPickingUpTest(int weight, int targetFloor, int startFloor,
                                   int elevatorTargetFloorNumber, int elevatorStartFloorNumber) {
         Elevator elevator = Elevator.of(VALID_LARGE_CAPACITY, elevatorStartFloorNumber);
-        building.addElevator(elevator);
-
-        elevator.addCall(Call.of(elevatorTargetFloorNumber, elevatorStartFloorNumber));
-
         Human firstHuman = Human.of(weight, targetFloor, building.getFloor(startFloor));
+        building.addElevator(elevator);
+        elevator.addCall(Call.of(elevatorTargetFloorNumber, elevatorStartFloorNumber));
 
         building.addHuman(firstHuman);
 
@@ -485,7 +500,6 @@ public class ElevatorTest {
         elevator.load();
 
         assertThat(elevator.getPassengers(), hasItems(firstHuman, secondHuman));
-        assertThat(elevator.getPassengers(), not(hasItem(thirdHuman)));
     }
 
     @Test
@@ -506,8 +520,49 @@ public class ElevatorTest {
         elevator.addCall(Call.of(lowerFloor, floor));
         elevator.load();
 
-        assertThat(elevator.getPassengers(), not(hasItems(firstHuman, secondHuman)));
         assertThat(elevator.getPassengers(), hasItems(thirdHuman));
+    }
+
+    @Test
+    void doNotLoadFromUpQueueWithDownDestinationDirectionTest(){
+        Floor floor = building.getFloor(VALID_FLOOR_NUMBER);
+        Floor upperFloor = building.getFloor(VALID_FLOOR_NUMBER + 1);
+        Floor lowerFloor = building.getFloor(VALID_FLOOR_NUMBER - 1);
+        Elevator elevator = Elevator.of(VALID_CAPACITY, floor);
+        building.setController(Controller.getEmpty()).addElevator(elevator);
+        Human firstHuman = Human.of(VALID_WEIGHT, upperFloor, floor);
+        Human secondHuman = Human.of(VALID_WEIGHT, upperFloor, floor);
+        Human thirdHuman = Human.of(VALID_WEIGHT, lowerFloor, floor);
+
+        floor.addHuman(firstHuman);
+        floor.addHuman(secondHuman);
+        floor.addHuman(thirdHuman);
+
+        elevator.addCall(Call.of(lowerFloor, floor));
+        elevator.load();
+
+        assertThat(elevator.getPassengers(), not(hasItems(firstHuman, secondHuman)));
+    }
+
+    @Test
+    void doNotLoadFromDownQueueWithUpDestinationDirectionTest(){
+        Floor floor = building.getFloor(VALID_FLOOR_NUMBER);
+        Floor upperFloor = building.getFloor(VALID_FLOOR_NUMBER + 1);
+        Floor lowerFloor = building.getFloor(VALID_FLOOR_NUMBER - 1);
+        Elevator elevator = Elevator.of(VALID_CAPACITY, floor);
+        building.setController(Controller.getEmpty()).addElevator(elevator);
+        Human firstHuman = Human.of(VALID_WEIGHT, upperFloor, floor);
+        Human secondHuman = Human.of(VALID_WEIGHT, upperFloor, floor);
+        Human thirdHuman = Human.of(VALID_WEIGHT, lowerFloor, floor);
+
+        floor.addHuman(firstHuman);
+        floor.addHuman(secondHuman);
+        floor.addHuman(thirdHuman);
+
+        elevator.addCall(Call.of(upperFloor, floor));
+        elevator.load();
+
+        assertThat(elevator.getPassengers(), not(hasItems(thirdHuman)));
     }
 
     @Test

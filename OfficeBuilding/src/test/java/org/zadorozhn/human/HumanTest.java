@@ -10,6 +10,7 @@ import org.mockito.Mockito;
 import org.mockito.internal.matchers.Null;
 import org.zadorozhn.building.Building;
 import org.zadorozhn.building.Call;
+import org.zadorozhn.building.Controller;
 import org.zadorozhn.building.Floor;
 import org.zadorozhn.human.Human;
 
@@ -28,11 +29,11 @@ class HumanTest {
     public static Building building;
 
     @BeforeEach
-    void init(){
-        building = Building.of(NUMBER_OF_FLOORS);
+    void init() {
+        building = Building.of(NUMBER_OF_FLOORS).setController(Controller.getEmpty());
     }
 
-    static final Object[][] getInvalidHumanCharacteristicsData(){
+    static Object[][] getInvalidHumanCharacteristicsData() {
         return new Object[][]{
                 {VALID_WEIGHT, INVALID_TARGET_FLOOR_NUMBER},
                 {INVALID_WEIGHT, VALID_TARGET_FLOOR_NUMBER},
@@ -42,17 +43,39 @@ class HumanTest {
         };
     }
 
+    static Object[][] getInvalidNullFloorsCombinationData() {
+        return new Object[][]{
+                {Floor.of(VALID_START_FLOOR_NUMBER, building), null},
+                {null, Floor.of(VALID_TARGET_FLOOR_NUMBER, building)},
+                {null, null}
+        };
+    }
+
     @Test
     void createValidHumanTest() {
         assertDoesNotThrow(() -> Human.of(VALID_WEIGHT,
                 VALID_TARGET_FLOOR_NUMBER, building.getFloor(VALID_START_FLOOR_NUMBER)));
     }
 
+    @Test
+    void createInvalidHumanWithTheSameFloor() {
+        Floor floor = building.getFloor(VALID_START_FLOOR_NUMBER);
+        assertThrows(IllegalArgumentException.class,
+                () -> Human.of(VALID_WEIGHT, floor, floor));
+    }
+
     @ParameterizedTest
     @MethodSource("getInvalidHumanCharacteristicsData")
-    void createInvalidHumanTest(int weight, int targetFloor) {
+    void createInvalidHumanByFloorNumberTest(int weight, int targetFloor) {
         assertThrows(IllegalArgumentException.class,
                 () -> Human.of(weight, targetFloor, building.getFloor(VALID_START_FLOOR_NUMBER)));
+    }
+
+    @ParameterizedTest
+    @MethodSource("getInvalidNullFloorsCombinationData")
+    void createInvalidHumanWithNullFloorTest(Floor targetFloor, Floor startFloor) {
+        assertThrows(NullPointerException.class,
+                () -> Human.of(VALID_WEIGHT, targetFloor, startFloor));
     }
 
     @Test
@@ -70,7 +93,7 @@ class HumanTest {
     }
 
     @Test
-    void getCallTest(){
+    void getCallTest() {
         Human human = Human.of(VALID_WEIGHT, VALID_TARGET_FLOOR_NUMBER, building.getFloor(VALID_START_FLOOR_NUMBER));
 
         assertThat(human.getCall(),
@@ -78,9 +101,33 @@ class HumanTest {
     }
 
     @Test
-    void getSsnTest(){
+    void getSsnTest() {
         Human human = Human.of(VALID_WEIGHT, VALID_TARGET_FLOOR_NUMBER, building.getFloor(VALID_START_FLOOR_NUMBER));
 
         assertThat(human.getSsn(), notNullValue());
+    }
+
+    @Test
+    void pushUpButtonTest(){
+        Floor lowerFloor = building.getFloor(0);
+        Floor upperFloor = building.getFloor(1);
+        Human human = Human.of(VALID_WEIGHT, upperFloor, lowerFloor);
+
+        human.pushButton();
+
+        assertThat(building.getController().getAllCalls(),
+                hasItem(Call.of(human.getStartFloor(), human.getCall().getDirection())));
+    }
+
+    @Test
+    void pushDownButtonTest(){
+        Floor lowerFloor = building.getFloor(0);
+        Floor upperFloor = building.getFloor(1);
+        Human human = Human.of(VALID_WEIGHT, lowerFloor, upperFloor);
+
+        human.pushButton();
+
+        assertThat(building.getController().getAllCalls(),
+                hasItem(Call.of(human.getStartFloor(), human.getCall().getDirection())));
     }
 }
