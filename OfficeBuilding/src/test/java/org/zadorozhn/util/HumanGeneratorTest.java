@@ -39,6 +39,22 @@ class HumanGeneratorTest {
     }
 
     @Test
+    void createValidHumanGeneratorWithoutSpeedTest() {
+        Building building = Building.of(NUMBER_OF_FLOORS)
+                .setController(Controller.getEmpty());
+
+        assertDoesNotThrow(() -> HumanGenerator.of(building, Human.MIN_WEIGHT, Human.MAX_WEIGHT));
+    }
+
+    @Test
+    void createValidHumanGeneratorOnlyWithBuildingTest() {
+        Building building = Building.of(NUMBER_OF_FLOORS)
+                .setController(Controller.getEmpty());
+
+        assertDoesNotThrow(() -> HumanGenerator.of(building));
+    }
+
+    @Test
     void createInvalidWithNullBuildingHumanGeneratorTest() {
         Building building = null;
 

@@ -1,6 +1,7 @@
 package org.zadorozhn.building;
 
 import com.google.common.collect.ImmutableList;
+import lombok.Getter;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.zadorozhn.building.state.Direction;
@@ -28,15 +29,18 @@ public class Elevator implements Runnable, Interruptable {
     public final static int MAX_SPEED = 1000;
     public final static int MIN_CAPACITY = 0;
 
-    private final UUID id;
+    @Getter
     private final int capacity;
+    @Getter
     private final int moveSpeed;
+    @Getter
     private final int doorWorkSpeed;
     private int currentFloorNumber;
     private boolean isRunning;
     private Building building;
     private final List<Human> passengers;
     private final List<Call> calls;
+    private final UUID id;
 
     private final Condition elevatorStopCondition;
     private final Lock currentFloorLock;

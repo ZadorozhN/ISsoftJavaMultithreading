@@ -21,6 +21,8 @@ public class ElevatorTest {
     public static final int INVALID_NEGATIVE_CAPACITY = 0;
     public static final int NUMBER_OF_FLOORS = 10;
     public static final int VALID_WEIGHT = 50;
+    public static final int VALID_MOVE_SPEED = 400;
+    public static final int VALID_DOOR_WORK_SPEED = 500;
     public static Building building;
 
     @BeforeEach
@@ -135,6 +137,31 @@ public class ElevatorTest {
     @Test
     void createValidElevatorTest() {
         assertDoesNotThrow(() -> Elevator.of(VALID_CAPACITY));
+    }
+
+    @Test
+    void createValidElevatorWithStartFloorTest() {
+        Elevator elevator = Elevator.of(VALID_CAPACITY, VALID_FLOOR_NUMBER);
+
+        assertThat(elevator.getCurrentFloorNumber(), equalTo(VALID_FLOOR_NUMBER));
+    }
+
+    @Test
+    void createValidElevatorWithStartSpeedTest() {
+        Elevator elevator = Elevator.of(VALID_CAPACITY, VALID_FLOOR_NUMBER, VALID_MOVE_SPEED);
+
+        assertThat(elevator.getCurrentFloorNumber(), equalTo(VALID_FLOOR_NUMBER));
+        assertThat(elevator.getDoorWorkSpeed(), equalTo(VALID_MOVE_SPEED));
+        assertThat(elevator.getMoveSpeed(), equalTo(VALID_MOVE_SPEED));
+    }
+
+    @Test
+    void createValidElevatorWithFullConfigurationTest() {
+        Elevator elevator = Elevator.of(VALID_CAPACITY, VALID_FLOOR_NUMBER, VALID_MOVE_SPEED, VALID_DOOR_WORK_SPEED);
+
+        assertThat(elevator.getCurrentFloorNumber(), equalTo(VALID_FLOOR_NUMBER));
+        assertThat(elevator.getDoorWorkSpeed(), equalTo(VALID_DOOR_WORK_SPEED));
+        assertThat(elevator.getMoveSpeed(), equalTo(VALID_MOVE_SPEED));
     }
 
     @ParameterizedTest
