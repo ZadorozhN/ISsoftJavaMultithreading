@@ -9,22 +9,31 @@ import org.zadorozhn.util.UserInterface;
 
 public class Runner {
     public static void main(String[] args){
-        Building building = Building.of(10)
-                .setController(Controller.getEmpty())
-                .addElevator(Elevator.of(500,0,100))
-                .addElevator(Elevator.of(500,0,100))
-                .addElevator(Elevator.of(500,0,100))
-                .addElevator(Elevator.of(500,0,100))
-                .addElevator(Elevator.of(500,0,100))
-                .addElevator(Elevator.of(500,0,100))
-                .addElevator(Elevator.of(500,0,100))
-                .addElevator(Elevator.of(500,0,100))
-                .addElevator(Elevator.of(500,0,100))
-                .addElevator(Elevator.of(500,0,100))
-                .addElevator(Elevator.of(500,0,100));
+        int numberOfFloors = 10;
+        int capacityOfElevator = 500;
+        int startFloorNumber = 0;
+        int movingSpeed = 100;
+        int doorWorkSpeed = 100;
+        int generatingSpeed = 100;
+        int userInterfaceRenderingSpeed = 600;
 
-        HumanGenerator humanGenerator = HumanGenerator.of(building, 50, 200, 100);
-        UserInterface userInterface = UserInterface.of(building, 600);
+        Building building = Building.of(numberOfFloors)
+                .setController(Controller.getEmpty())
+                .addElevator(Elevator.of(capacityOfElevator,startFloorNumber,movingSpeed, doorWorkSpeed))
+                .addElevator(Elevator.of(capacityOfElevator,startFloorNumber,movingSpeed, doorWorkSpeed))
+                .addElevator(Elevator.of(capacityOfElevator,startFloorNumber,movingSpeed, doorWorkSpeed))
+                .addElevator(Elevator.of(capacityOfElevator,startFloorNumber,movingSpeed, doorWorkSpeed))
+                .addElevator(Elevator.of(capacityOfElevator,startFloorNumber,movingSpeed, doorWorkSpeed))
+                .addElevator(Elevator.of(capacityOfElevator,startFloorNumber,movingSpeed, doorWorkSpeed))
+                .addElevator(Elevator.of(capacityOfElevator,startFloorNumber,movingSpeed, doorWorkSpeed))
+                .addElevator(Elevator.of(capacityOfElevator,startFloorNumber,movingSpeed, doorWorkSpeed))
+                .addElevator(Elevator.of(capacityOfElevator,startFloorNumber,movingSpeed, doorWorkSpeed))
+                .addElevator(Elevator.of(capacityOfElevator,startFloorNumber,movingSpeed, doorWorkSpeed));
+
+        HumanGenerator humanGenerator = HumanGenerator.of(building,
+                Human.MIN_WEIGHT, Human.MAX_WEIGHT, generatingSpeed);
+
+        UserInterface userInterface = UserInterface.of(building, userInterfaceRenderingSpeed);
 
         humanGenerator.start();
         userInterface.start();
