@@ -266,7 +266,6 @@ public class ElevatorTest {
         assertThat(elevator.getDirection(), equalTo(human.getCall().getDirection()));
     }
 
-
     @ParameterizedTest
     @MethodSource("getPickUpHumanWithDownMoveStateTestData")
     void pickUpHumanWithMoveDownStateTest(int weight, int targetFloor, int startFloor,

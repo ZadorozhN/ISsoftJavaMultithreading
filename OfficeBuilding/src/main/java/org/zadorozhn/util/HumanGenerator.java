@@ -6,15 +6,15 @@ import lombok.extern.slf4j.Slf4j;
 import org.zadorozhn.building.Building;
 import org.zadorozhn.building.Floor;
 import org.zadorozhn.human.Human;
-import org.zadorozhn.util.interrupt.Interruptable;
-
+import org.zadorozhn.util.interrupt.Interruptible;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
+
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 @Slf4j
-public class HumanGenerator extends Thread implements Interruptable {
+public class HumanGenerator extends Thread implements Interruptible {
     private final Building building;
     private final int generateSpeed;
     private final int weightFrom;

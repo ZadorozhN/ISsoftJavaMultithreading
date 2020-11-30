@@ -8,7 +8,7 @@ import org.zadorozhn.building.state.Direction;
 import org.zadorozhn.building.state.State;
 import org.zadorozhn.human.Human;
 import org.zadorozhn.util.StatisticsHolder;
-import org.zadorozhn.util.interrupt.Interruptable;
+import org.zadorozhn.util.interrupt.Interruptible;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -21,7 +21,7 @@ import java.util.stream.Collectors;
 import static com.google.common.base.Preconditions.*;
 
 @Slf4j
-public class Elevator implements Runnable, Interruptable {
+public class Elevator implements Runnable, Interruptible {
     public final static int MIN_CAPACITY = 0;
 
     @Getter
@@ -32,11 +32,6 @@ public class Elevator implements Runnable, Interruptable {
     private final int moveSpeed;
     @Getter
     private final int doorWorkSpeed;
-    @Getter
-    private int numberOfDeliveredPeople;
-    private int currentFloorNumber;
-    private boolean isRunning;
-    private Building building;
     private final List<Human> passengers;
     private final List<Call> calls;
 
@@ -46,6 +41,11 @@ public class Elevator implements Runnable, Interruptable {
     private final Lock stateLock;
     private final Lock callLock;
 
+    @Getter
+    private int numberOfDeliveredPeople;
+    private int currentFloorNumber;
+    private boolean isRunning;
+    private Building building;
     private Direction direction;
     private State state;
 
@@ -342,6 +342,14 @@ public class Elevator implements Runnable, Interruptable {
         state = State.LOAD;
         stateLock.unlock();
 
+        handleDisembark();
+        handleLoadDirectionState();
+        handleEmbark();
+
+        log.info("elevator finishes load");
+    }
+
+    private void handleDisembark(){
         peopleLock.lock();
         List<Human> peopleForDisembark = passengers.stream()
                 .filter(i -> i.getCall().getTargetFloorNumber() == currentFloorNumber)
@@ -350,6 +358,10 @@ public class Elevator implements Runnable, Interruptable {
 
         peopleForDisembark.forEach(this::disembark);
 
+        log.info("elevator has finished disembarking");
+    }
+
+    private void handleLoadDirectionState(){
         peopleLock.lock();
         stateLock.lock();
         if (passengers.isEmpty() && calls.isEmpty()) {
@@ -360,9 +372,9 @@ public class Elevator implements Runnable, Interruptable {
         }
         stateLock.unlock();
         peopleLock.unlock();
+    }
 
-        log.info("elevator has finished disembarking");
-
+    private void handleEmbark(){
         while (state == State.LOAD) {
             getCurrentFloor().getFloorLock().lock();
             stateLock.lock();
@@ -402,8 +414,6 @@ public class Elevator implements Runnable, Interruptable {
                 break;
             }
         }
-
-        log.info("elevator finishes load");
     }
 
     @SneakyThrows
@@ -472,21 +482,26 @@ public class Elevator implements Runnable, Interruptable {
 
     @Override
     public void run() {
+        boolean areWaitingPeopleOnThisFloor;
+        boolean hasExecutedCalls;
+        int currentCallFloorNumber;
+
         turnOn();
+
         while (isRunning) {
             callLock.lock();
             if (calls.isEmpty()) {
                 callLock.unlock();
                 stop();
             } else {
-                boolean hasExecutedCalls = removeExecutedCalls();
-                int currentCallFloorNumber = calls.isEmpty()
+                hasExecutedCalls = removeExecutedCalls();
+                currentCallFloorNumber = calls.isEmpty()
                         ? currentFloorNumber
                         : calls.get(0).getTargetFloorNumber();
 
                 callLock.unlock();
 
-                boolean areWaitingPeopleOnThisFloor = checkFloor();
+                areWaitingPeopleOnThisFloor = checkFloor();
 
                 if (hasExecutedCalls || areWaitingPeopleOnThisFloor) {
                     openDoor();
@@ -499,6 +514,7 @@ public class Elevator implements Runnable, Interruptable {
                 }
             }
         }
+
         end();
     }
 

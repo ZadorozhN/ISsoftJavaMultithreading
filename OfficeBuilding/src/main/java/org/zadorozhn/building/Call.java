@@ -1,8 +1,8 @@
 package org.zadorozhn.building;
 
-import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.ToString;
+import lombok.EqualsAndHashCode;
 import org.zadorozhn.building.state.Direction;
 
 import static com.google.common.base.Preconditions.*;

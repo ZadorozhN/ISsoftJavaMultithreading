@@ -1,24 +1,23 @@
 package org.zadorozhn.building;
 
-import com.google.common.collect.ImmutableList;
-import java.util.*;
-import java.util.concurrent.locks.Condition;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
-import java.util.stream.Collectors;
-
 import lombok.Getter;
 import lombok.Setter;
-import lombok.extern.slf4j.Slf4j;
 import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
 import org.zadorozhn.building.state.Direction;
 import org.zadorozhn.building.state.State;
-import org.zadorozhn.util.interrupt.Interruptable;
+import org.zadorozhn.util.interrupt.Interruptible;
+import com.google.common.collect.ImmutableList;
+import java.util.concurrent.locks.ReentrantLock;
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.Lock;
+import java.util.stream.Collectors;
+import java.util.*;
 
 import static com.google.common.base.Preconditions.*;
 
 @Slf4j
-public class Controller implements Runnable, Interruptable {
+public class Controller implements Runnable, Interruptible {
     @Setter
     private List<Elevator> elevators;
     private final Queue<Call> calls;

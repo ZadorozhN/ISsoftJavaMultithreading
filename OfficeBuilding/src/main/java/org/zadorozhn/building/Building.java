@@ -1,13 +1,13 @@
 package org.zadorozhn.building;
 
 import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.IntStream;
 import com.google.common.collect.ImmutableList;
-import lombok.extern.slf4j.Slf4j;
 import org.zadorozhn.human.Human;
 
 import static com.google.common.base.Preconditions.*;

@@ -78,21 +78,19 @@ public class Floor {
 
         floorLock.lock();
         direction = resolveDirection(direction);
-        int size = direction.equals(Direction.UP) ? queueUp.size() : queueDown.size();
+        int count = direction.equals(Direction.UP) ? queueUp.size() : queueDown.size();
         floorLock.unlock();
 
-        return size;
+        return count;
     }
 
     @Nullable
     public Human getFirstHuman(Direction direction) {
         checkNotNull(direction);
 
-        Human human;
-
         floorLock.lock();
         direction = resolveDirection(direction);
-        human = direction.equals(Direction.UP) ? queueUp.peek() : queueDown.peek();
+        Human human = direction.equals(Direction.UP) ? queueUp.peek() : queueDown.peek();
         floorLock.unlock();
 
         return human;

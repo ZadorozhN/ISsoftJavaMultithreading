@@ -5,14 +5,14 @@ import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.zadorozhn.building.Building;
 import org.zadorozhn.building.state.Direction;
-import org.zadorozhn.util.interrupt.Interruptable;
+import org.zadorozhn.util.interrupt.Interruptible;
 import java.util.concurrent.TimeUnit;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkArgument;
 
 @Slf4j
-public class UserInterface extends Thread implements Interruptable {
+public class UserInterface extends Thread implements Interruptible {
     public static final String ANSI_RESET = "\u001B[0m";
     public static final String ANSI_BLACK = "\u001B[30m";
     public static final String ANSI_RED = "\u001B[1;41m\u001B[97m";
@@ -94,16 +94,6 @@ public class UserInterface extends Thread implements Interruptable {
         }
     }
 
-    @SneakyThrows
-    @Override
-    public void run(){
-        turnOn();
-        while (isRunning){
-            TimeUnit.MILLISECONDS.sleep(DEFAULT_OPERATION_TIME - renderingSpeed);
-            printBuilding();
-        }
-    }
-
     @Override
     public void turnOff() {
         isRunning = false;
@@ -112,5 +102,15 @@ public class UserInterface extends Thread implements Interruptable {
     @Override
     public void turnOn() {
         isRunning = true;
+    }
+
+    @SneakyThrows
+    @Override
+    public void run(){
+        turnOn();
+        while (isRunning){
+            TimeUnit.MILLISECONDS.sleep(DEFAULT_OPERATION_TIME - renderingSpeed);
+            printBuilding();
+        }
     }
 }

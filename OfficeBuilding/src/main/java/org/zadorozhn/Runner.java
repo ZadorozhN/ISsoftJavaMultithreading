@@ -8,7 +8,7 @@ import org.zadorozhn.util.UserInterface;
 
 public class Runner {
     public static void main(String[] args){
-        Building building = Building.of(3)
+        Building building = Building.of(2)
                 .setController(Controller.getEmpty())
                 .addElevator(Elevator.of(5000,0,100))
                 .addElevator(Elevator.of(5000,0,100))
