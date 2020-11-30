@@ -3,4 +3,6 @@
 /**/*.iml
 /**/target
 /**/out
+/**/*.log
+/**/META-INF
 

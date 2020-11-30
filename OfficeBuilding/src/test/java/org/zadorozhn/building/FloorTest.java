@@ -10,33 +10,33 @@ import static org.hamcrest.Matchers.*;
 import static org.hamcrest.MatcherAssert.*;
 
 class FloorTest {
+    public static final int VALID_ELEVATOR_CAPACITY = 500;
     public static final int VALID_FLOOR_NUMBER = 1;
     public static final int VALID_WEIGHT = 60;
-    public static final int VALID_ELEVATOR_CAPACITY = 500;
     public static final int INVALID_FLOOR_NUMBER = -1;
     public static final int NUMBER_OF_FLOORS = 10;
     public static Building building;
 
     @BeforeEach
-    void init(){
+    void init() {
         building = Building.of(NUMBER_OF_FLOORS)
                 .addElevator(Elevator.of(VALID_ELEVATOR_CAPACITY))
                 .setController(Controller.getEmpty());
     }
 
     @Test
-    void createValidFloorTest(){
+    void createValidFloorTest() {
         assertDoesNotThrow(() -> Floor.of(VALID_FLOOR_NUMBER, building));
     }
 
     @Test
-    void createInvalidFloorTest(){
+    void createInvalidFloorTest() {
         assertThrows(IllegalArgumentException.class,
                 () -> Floor.of(INVALID_FLOOR_NUMBER, building));
     }
 
     @Test
-    void pollFirstHumanTest(){
+    void pollFirstHumanTest() {
         Floor floor = building.getFloor(VALID_FLOOR_NUMBER);
         Floor firstUpperFloor = building.getFloor(VALID_FLOOR_NUMBER + 1);
         Floor secondUpperFloor = building.getFloor(VALID_FLOOR_NUMBER + 2);
@@ -54,7 +54,7 @@ class FloorTest {
     }
 
     @Test
-    void pollFirstHumanFromNullQueueTest(){
+    void pollFirstHumanFromNullQueueTest() {
         Floor floor = building.getFloor(VALID_FLOOR_NUMBER);
 
         assertDoesNotThrow(() -> floor.pollFirstHuman(Direction.UP));
@@ -63,7 +63,7 @@ class FloorTest {
     }
 
     @Test
-    void getFirstHumanFromNullQueueTest(){
+    void getFirstHumanFromNullQueueTest() {
         Floor floor = building.getFloor(VALID_FLOOR_NUMBER);
 
         assertDoesNotThrow(() -> floor.getFirstHuman(Direction.UP));
@@ -72,7 +72,7 @@ class FloorTest {
     }
 
     @Test
-    void addHumanTest(){
+    void addHumanTest() {
         Floor floor = building.getFloor(VALID_FLOOR_NUMBER);
         Floor firstUpperFloor = building.getFloor(VALID_FLOOR_NUMBER + 1);
         Human firstHuman = Human.of(VALID_WEIGHT, firstUpperFloor, floor);
@@ -87,14 +87,14 @@ class FloorTest {
     }
 
     @Test
-    void addNullHumanTest(){
+    void addNullHumanTest() {
         Floor floor = building.getFloor(VALID_FLOOR_NUMBER);
 
-        assertThrows(NullPointerException.class, ()-> floor.addHuman(null));
+        assertThrows(NullPointerException.class, () -> floor.addHuman(null));
     }
 
     @Test
-    void getFirstHumanTest(){
+    void getFirstHumanTest() {
         Floor floor = building.getFloor(VALID_FLOOR_NUMBER);
         Floor firstUpperFloor = building.getFloor(VALID_FLOOR_NUMBER + 1);
         Floor secondUpperFloor = building.getFloor(VALID_FLOOR_NUMBER + 2);
@@ -112,7 +112,7 @@ class FloorTest {
     }
 
     @Test
-    void getHumanQueueWithDifferentDirectionTest(){
+    void getHumanQueueWithDifferentDirectionTest() {
         Floor floor = building.getFloor(VALID_FLOOR_NUMBER);
         Floor firstUpperFloor = building.getFloor(VALID_FLOOR_NUMBER + 1);
         Human firstHuman = Human.of(VALID_WEIGHT, firstUpperFloor, floor);
@@ -126,7 +126,7 @@ class FloorTest {
     }
 
     @Test
-    void getHumanQueueFromTheLongestQueueTest(){
+    void getHumanQueueFromTheLongestQueueTest() {
         Floor floor = building.getFloor(VALID_FLOOR_NUMBER);
         Floor upperFloor = building.getFloor(VALID_FLOOR_NUMBER + 1);
         Floor lowerFloor = building.getFloor(VALID_FLOOR_NUMBER - 1);
@@ -143,7 +143,7 @@ class FloorTest {
     }
 
     @Test
-    void getFirstHumanFromTheLongestQueueTest(){
+    void getFirstHumanFromTheLongestQueueTest() {
         Floor floor = building.getFloor(VALID_FLOOR_NUMBER);
         Floor upperFloor = building.getFloor(VALID_FLOOR_NUMBER + 1);
         Floor lowerFloor = building.getFloor(VALID_FLOOR_NUMBER - 1);
@@ -159,7 +159,7 @@ class FloorTest {
     }
 
     @Test
-    void getFirstHumanFromTheUpQueueTest(){
+    void getFirstHumanFromTheUpQueueTest() {
         Floor floor = building.getFloor(VALID_FLOOR_NUMBER);
         Floor upperFloor = building.getFloor(VALID_FLOOR_NUMBER + 1);
         Floor lowerFloor = building.getFloor(VALID_FLOOR_NUMBER - 1);
@@ -175,7 +175,7 @@ class FloorTest {
     }
 
     @Test
-    void getFirstHumanFromTheDownQueueTest(){
+    void getFirstHumanFromTheDownQueueTest() {
         Floor floor = building.getFloor(VALID_FLOOR_NUMBER);
         Floor upperFloor = building.getFloor(VALID_FLOOR_NUMBER + 1);
         Floor lowerFloor = building.getFloor(VALID_FLOOR_NUMBER - 1);
@@ -191,7 +191,7 @@ class FloorTest {
     }
 
     @Test
-    void pollFirstHumanFromTheLongestQueueTest(){
+    void pollFirstHumanFromTheLongestQueueTest() {
         Floor floor = building.getFloor(VALID_FLOOR_NUMBER);
         Floor upperFloor = building.getFloor(VALID_FLOOR_NUMBER + 1);
         Floor lowerFloor = building.getFloor(VALID_FLOOR_NUMBER - 1);
@@ -207,7 +207,7 @@ class FloorTest {
     }
 
     @Test
-    void pollFirstHumanFromTheUpQueueTest(){
+    void pollFirstHumanFromTheUpQueueTest() {
         Floor floor = building.getFloor(VALID_FLOOR_NUMBER);
         Floor upperFloor = building.getFloor(VALID_FLOOR_NUMBER + 1);
         Floor lowerFloor = building.getFloor(VALID_FLOOR_NUMBER - 1);
@@ -223,7 +223,7 @@ class FloorTest {
     }
 
     @Test
-    void poolFirstHumanFromTheDownQueueTest(){
+    void poolFirstHumanFromTheDownQueueTest() {
         Floor floor = building.getFloor(VALID_FLOOR_NUMBER);
         Floor upperFloor = building.getFloor(VALID_FLOOR_NUMBER + 1);
         Floor lowerFloor = building.getFloor(VALID_FLOOR_NUMBER - 1);
@@ -239,7 +239,7 @@ class FloorTest {
     }
 
     @Test
-    void getNumberOfPeopleTest(){
+    void getNumberOfPeopleTest() {
         Floor floor = building.getFloor(VALID_FLOOR_NUMBER);
         Floor firstUpperFloor = building.getFloor(VALID_FLOOR_NUMBER + 1);
         Floor secondUpperFloor = building.getFloor(VALID_FLOOR_NUMBER + 2);
@@ -255,7 +255,7 @@ class FloorTest {
     }
 
     @Test
-    void getNumberOfPeopleFromTheLongestQueueTest(){
+    void getNumberOfPeopleFromTheLongestQueueTest() {
         Floor floor = building.getFloor(VALID_FLOOR_NUMBER);
         Floor upperFloor = building.getFloor(VALID_FLOOR_NUMBER + 1);
         Floor lowerFloor = building.getFloor(VALID_FLOOR_NUMBER - 1);
@@ -271,7 +271,7 @@ class FloorTest {
     }
 
     @Test
-    void getNumberOfPeopleFromUpQueueTest(){
+    void getNumberOfPeopleFromUpQueueTest() {
         Floor floor = building.getFloor(VALID_FLOOR_NUMBER);
         Floor upperFloor = building.getFloor(VALID_FLOOR_NUMBER + 1);
         Floor lowerFloor = building.getFloor(VALID_FLOOR_NUMBER - 1);
@@ -287,7 +287,7 @@ class FloorTest {
     }
 
     @Test
-    void getNumberOfPeopleFromDownQueueTest(){
+    void getNumberOfPeopleFromDownQueueTest() {
         Floor floor = building.getFloor(VALID_FLOOR_NUMBER);
         Floor upperFloor = building.getFloor(VALID_FLOOR_NUMBER + 1);
         Floor lowerFloor = building.getFloor(VALID_FLOOR_NUMBER - 1);
@@ -319,7 +319,7 @@ class FloorTest {
     }
 
     @Test
-    void callElevatorTest(){
+    void callElevatorTest() {
         Floor floor = building.getFloor(VALID_FLOOR_NUMBER);
         Direction direction = Direction.DOWN;
         floor.callElevator(direction);

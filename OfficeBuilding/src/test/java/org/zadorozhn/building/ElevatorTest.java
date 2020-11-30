@@ -13,15 +13,15 @@ import static org.hamcrest.Matchers.*;
 import static org.hamcrest.MatcherAssert.*;
 
 public class ElevatorTest {
+    public static final int VALID_LARGE_CAPACITY = 300;
+    public static final int VALID_DOOR_WORK_SPEED = 500;
+    public static final int VALID_MOVE_SPEED = 400;
     public static final int VALID_FLOOR_NUMBER = 1;
     public static final int VALID_CAPACITY = 100;
-    public static final int VALID_LARGE_CAPACITY = 300;
-    public static final int INVALID_ZERO_CAPACITY = 0;
-    public static final int INVALID_NEGATIVE_CAPACITY = 0;
-    public static final int NUMBER_OF_FLOORS = 10;
     public static final int VALID_WEIGHT = 50;
-    public static final int VALID_MOVE_SPEED = 400;
-    public static final int VALID_DOOR_WORK_SPEED = 500;
+    public static final int INVALID_NEGATIVE_CAPACITY = -1;
+    public static final int INVALID_ZERO_CAPACITY = 0;
+    public static final int NUMBER_OF_FLOORS = 10;
     public static Building building;
 
     @BeforeEach
@@ -94,7 +94,7 @@ public class ElevatorTest {
         };
     }
 
-    static Object[][] getPassengersTestData(){
+    static Object[][] getPassengersTestData() {
         return new Object[][]{
                 {50, 1, 2, 2},
                 {50, 2, 3, 3},
@@ -103,7 +103,7 @@ public class ElevatorTest {
         };
     }
 
-    static Object[][] getLoadTestData(){
+    static Object[][] getLoadTestData() {
         return new Object[][]{
                 {60, 7, 5, 8, 5},
                 {60, 8, 3, 4, 3},
@@ -113,7 +113,7 @@ public class ElevatorTest {
         };
     }
 
-    static Object[][] getLoadWithoutPickingUpTestData(){
+    static Object[][] getLoadWithoutPickingUpTestData() {
         return new Object[][]{
                 {60, 4, 5, 8, 4},
                 {60, 2, 3, 8, 2},
@@ -123,7 +123,7 @@ public class ElevatorTest {
         };
     }
 
-    static Object[][] getLoadWithPickingUpTestData(){
+    static Object[][] getLoadWithPickingUpTestData() {
         return new Object[][]{
                 {60, 7, 5, 8, 4},
                 {60, 8, 3, 4, 2},
@@ -329,6 +329,20 @@ public class ElevatorTest {
         assertThrows(NullPointerException.class, () -> elevator.disembark(null));
     }
 
+    @Test
+    void removeExecutedCallsTest(){
+        Elevator elevator = Elevator.of(VALID_CAPACITY, VALID_FLOOR_NUMBER);
+        building.addElevator(elevator);
+
+        Call call = Call.of(VALID_FLOOR_NUMBER, Direction.UP);
+        building.getController().addCall(call);
+        building.getController().dispatchCall();
+
+        assertThat(elevator.getCalls(), hasItem(call));
+        assertThat(elevator.removeExecutedCalls(), equalTo(true));
+        assertThat(elevator.getCalls(), not(hasItem(call)));
+    }
+
     @ParameterizedTest
     @MethodSource("getPickUpHumanTestData")
     void loadWithNoSpaceTest(int weight, int targetFloor, int startFloor) {
@@ -351,7 +365,7 @@ public class ElevatorTest {
     @ParameterizedTest
     @MethodSource("getCheckFloorWithPickingUpTestData")
     void checkFloorWithPickingUpTest(int weight, int targetFloor, int startFloor,
-                                            int elevatorCallTargetFloorNumber, int elevatorStartFloorNumber) {
+                                     int elevatorCallTargetFloorNumber, int elevatorStartFloorNumber) {
         Elevator elevator = Elevator.of(VALID_CAPACITY, elevatorStartFloorNumber);
         building.addElevator(elevator);
 
@@ -369,7 +383,7 @@ public class ElevatorTest {
     @ParameterizedTest
     @MethodSource("getCheckFloorWithoutPickingUpTestData")
     void checkFloorWithoutPickingUpTest(int weight, int targetFloor, int startFloor,
-                                               int elevatorCallTargetFloorNumber, int elevatorStartFloorNumber) {
+                                        int elevatorCallTargetFloorNumber, int elevatorStartFloorNumber) {
         Elevator elevator = Elevator.of(VALID_CAPACITY, elevatorStartFloorNumber);
         building.addElevator(elevator);
 
@@ -415,7 +429,6 @@ public class ElevatorTest {
         assertThat(elevator.getPassengers(), contains(firstHuman));
     }
 
-
     @ParameterizedTest
     @MethodSource("getLoadWithoutPickingUpTestData")
     void loadWithoutPickingUpTest(int weight, int targetFloor, int startFloor,
@@ -451,7 +464,32 @@ public class ElevatorTest {
     }
 
     @Test
-    void loadFromTheLongestQueueTest(){
+    void loadFromEmptyFloorTest() {
+        Elevator elevator = Elevator.of(VALID_CAPACITY, VALID_FLOOR_NUMBER);
+        building.addElevator(elevator);
+
+        elevator.load();
+
+        assertThat(elevator.getPassengers(), is(empty()));
+    }
+
+    @Test
+    void loadFromEmptyFloorWithCallTest() {
+        Elevator elevator = Elevator.of(VALID_CAPACITY, VALID_FLOOR_NUMBER);
+
+        building.addElevator(elevator);
+        building.getController().addCall(Call.of(VALID_FLOOR_NUMBER, Direction.UP));
+        building.getController().dispatchCall();
+
+        elevator.load();
+        elevator.removeExecutedCalls();
+
+        assertThat(elevator.getPassengers(), is(empty()));
+        assertThat(elevator.getCalls(), is(empty()));
+    }
+
+    @Test
+    void loadFromTheLongestQueueTest() {
         Floor floor = building.getFloor(VALID_FLOOR_NUMBER);
         Floor upperFloor = building.getFloor(VALID_FLOOR_NUMBER + 1);
         Floor lowerFloor = building.getFloor(VALID_FLOOR_NUMBER - 1);
@@ -472,7 +510,7 @@ public class ElevatorTest {
     }
 
     @Test
-    void loadFromUpQueueTest(){
+    void loadFromUpQueueTest() {
         Floor floor = building.getFloor(VALID_FLOOR_NUMBER);
         Floor upperFloor = building.getFloor(VALID_FLOOR_NUMBER + 1);
         Floor lowerFloor = building.getFloor(VALID_FLOOR_NUMBER - 1);
@@ -495,7 +533,7 @@ public class ElevatorTest {
     }
 
     @Test
-    void loadFromDownQueueTest(){
+    void loadFromDownQueueTest() {
         Floor floor = building.getFloor(VALID_FLOOR_NUMBER);
         Floor upperFloor = building.getFloor(VALID_FLOOR_NUMBER + 1);
         Floor lowerFloor = building.getFloor(VALID_FLOOR_NUMBER - 1);
@@ -518,7 +556,7 @@ public class ElevatorTest {
     }
 
     @Test
-    void loadFromUpQueueWithUpDestinationDirectionTest(){
+    void loadFromUpQueueWithUpDestinationDirectionTest() {
         Floor floor = building.getFloor(VALID_FLOOR_NUMBER);
         Floor upperFloor = building.getFloor(VALID_FLOOR_NUMBER + 1);
         Floor lowerFloor = building.getFloor(VALID_FLOOR_NUMBER - 1);
@@ -539,7 +577,7 @@ public class ElevatorTest {
     }
 
     @Test
-    void loadFromDownQueueWithDownDestinationDirectionTest(){
+    void loadFromDownQueueWithDownDestinationDirectionTest() {
         Floor floor = building.getFloor(VALID_FLOOR_NUMBER);
         Floor upperFloor = building.getFloor(VALID_FLOOR_NUMBER + 1);
         Floor lowerFloor = building.getFloor(VALID_FLOOR_NUMBER - 1);
@@ -560,7 +598,7 @@ public class ElevatorTest {
     }
 
     @Test
-    void doNotLoadFromUpQueueWithDownDestinationDirectionTest(){
+    void doNotLoadFromUpQueueWithDownDestinationDirectionTest() {
         Floor floor = building.getFloor(VALID_FLOOR_NUMBER);
         Floor upperFloor = building.getFloor(VALID_FLOOR_NUMBER + 1);
         Floor lowerFloor = building.getFloor(VALID_FLOOR_NUMBER - 1);
@@ -581,7 +619,7 @@ public class ElevatorTest {
     }
 
     @Test
-    void doNotLoadFromDownQueueWithUpDestinationDirectionTest(){
+    void doNotLoadFromDownQueueWithUpDestinationDirectionTest() {
         Floor floor = building.getFloor(VALID_FLOOR_NUMBER);
         Floor upperFloor = building.getFloor(VALID_FLOOR_NUMBER + 1);
         Floor lowerFloor = building.getFloor(VALID_FLOOR_NUMBER - 1);
@@ -602,7 +640,26 @@ public class ElevatorTest {
     }
 
     @Test
-    void turnOnTest(){
+    void numberOfDeliveredPeopleTest(){
+        Floor startFloor = building.getFloor(0);
+        Floor upperFloor = building.getFloor(1);
+        Elevator elevator = Elevator.of(VALID_LARGE_CAPACITY, startFloor);
+        building.setController(Controller.getEmpty())
+                .addElevator(elevator)
+                .addHuman(Human.of(VALID_WEIGHT, upperFloor, startFloor))
+                .addHuman(Human.of(VALID_WEIGHT, upperFloor, startFloor))
+                .addHuman(Human.of(VALID_WEIGHT, upperFloor, startFloor));
+
+        elevator.load();
+        elevator.goUp();
+        elevator.load();
+
+        assertThat(elevator.getPassengers(), is(empty()));
+        assertThat(elevator.getNumberOfDeliveredPeople(), equalTo(3));
+    }
+
+    @Test
+    void turnOnTest() {
         Elevator elevator = Elevator.of(VALID_CAPACITY);
 
         elevator.turnOn();
@@ -611,7 +668,7 @@ public class ElevatorTest {
     }
 
     @Test
-    void turnOffTest(){
+    void turnOffTest() {
         Elevator elevator = Elevator.of(VALID_CAPACITY);
 
         elevator.turnOn();

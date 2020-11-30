@@ -9,12 +9,12 @@ import static org.hamcrest.Matchers.*;
 class StatisticsHolderTest {
 
     @BeforeEach
-    void init(){
+    void init() {
         StatisticsHolder.getInstance().restart();
     }
 
     @Test
-    void restartTest(){
+    void restartTest() {
         StatisticsHolder statisticsHolder = StatisticsHolder.getInstance();
 
         statisticsHolder.incrementNumberOfDeliveredPeople();

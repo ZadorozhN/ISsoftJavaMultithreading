@@ -7,10 +7,12 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.IntStream;
 import com.google.common.collect.ImmutableList;
+import lombok.extern.slf4j.Slf4j;
 import org.zadorozhn.human.Human;
 
 import static com.google.common.base.Preconditions.*;
 
+@Slf4j
 public class Building {
     public static final int MIN_NUMBER_OF_FLOORS = 2;
     public static final int MIN_NUMBER_OF_ELEVATORS = 1;
@@ -60,8 +62,8 @@ public class Building {
         checkNotNull(controller);
         checkState(elevators.size() >= MIN_NUMBER_OF_ELEVATORS);
 
-        elevators.forEach(i -> new Thread(i).start());
-        new Thread(controller).start();
+        startElevators();
+        startController();
 
         return this;
     }
@@ -70,7 +72,9 @@ public class Building {
         checkNotNull(controller);
         checkState(elevators.size() >= MIN_NUMBER_OF_ELEVATORS);
 
-        elevators.forEach(i -> new Thread(i).start());
+        String threadName = "elevator ";
+        IntStream.range(0, elevators.size())
+                .forEachOrdered(i -> new Thread(elevators.get(i), threadName + i).start());
 
         return this;
     }
@@ -79,7 +83,8 @@ public class Building {
         checkNotNull(controller);
         checkState(elevators.size() >= MIN_NUMBER_OF_ELEVATORS);
 
-        new Thread(controller).start();
+        String threadName = "controller";
+        new Thread(controller, threadName).start();
 
         return this;
     }
@@ -88,8 +93,8 @@ public class Building {
         checkNotNull(controller);
         checkState(elevators.size() >= MIN_NUMBER_OF_ELEVATORS);
 
-        elevators.forEach(Elevator::turnOff);
-        controller.turnOff();
+        stopElevators();
+        stopController();
 
         return this;
     }

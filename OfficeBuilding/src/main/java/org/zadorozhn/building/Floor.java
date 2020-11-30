@@ -78,7 +78,7 @@ public class Floor {
 
         floorLock.lock();
         direction = resolveDirection(direction);
-        int size = direction == Direction.UP ? queueUp.size() : queueDown.size();
+        int size = direction.equals(Direction.UP) ? queueUp.size() : queueDown.size();
         floorLock.unlock();
 
         return size;
@@ -92,7 +92,7 @@ public class Floor {
 
         floorLock.lock();
         direction = resolveDirection(direction);
-        human = direction == Direction.UP ? queueUp.peek() : queueDown.peek();
+        human = direction.equals(Direction.UP) ? queueUp.peek() : queueDown.peek();
         floorLock.unlock();
 
         return human;
@@ -107,7 +107,7 @@ public class Floor {
         floorLock.lock();
         direction = resolveDirection(direction);
         if (getFirstHuman(direction) != null) {
-            human = direction == Direction.UP ? queueUp.poll() : queueDown.poll();
+            human = direction.equals(Direction.UP) ? queueUp.poll() : queueDown.poll();
 
             if (getFirstHuman(direction) != null
                     && getController().canCallElevator(getFirstHuman(direction).getCall())) {
@@ -126,7 +126,7 @@ public class Floor {
         direction = resolveDirection(direction);
         floorLock.unlock();
 
-        return direction == Direction.UP ? ImmutableList.copyOf(queueUp) : ImmutableList.copyOf(queueDown);
+        return direction.equals(Direction.UP) ? ImmutableList.copyOf(queueUp) : ImmutableList.copyOf(queueDown);
     }
 
     private void enqueue(Queue<Human> queue, Human human) {

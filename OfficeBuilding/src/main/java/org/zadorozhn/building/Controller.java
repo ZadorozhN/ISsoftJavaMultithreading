@@ -82,6 +82,8 @@ public class Controller implements Runnable, Interruptable {
         callLock.lock();
         calls.removeAll(calls.stream().filter(call::equals).collect(Collectors.toList()));
         callLock.unlock();
+
+        log.info("call has been removed" + call);
     }
 
     public void dispatchCall() {
@@ -95,25 +97,14 @@ public class Controller implements Runnable, Interruptable {
             elevatorLock.lock();
             suitableElevators = elevators.stream()
                     .filter(i -> i.getDirection().equals(Direction.NONE)
-                            && i.getState() == State.STOP)
+                            && i.getState().equals(State.STOP))
                     .sorted(Comparator.comparing(i -> Math.abs(i.getCurrentFloorNumber() - call.getTargetFloorNumber())))
                     .collect(Collectors.toList());
             elevatorLock.unlock();
 
-            if (suitableElevators.isEmpty()) {
-                elevatorLock.lock();
-                suitableElevators = elevators.stream()
-                        .filter(i -> (i.getDestinationDirection() == call.getDirection()
-                                || (i.getDestinationDirection() == Direction.NONE
-                                && i.getDirection() == call.getDirection()))
-                                && i.getState() == State.MOVE)
-                        .sorted(Comparator.comparing(i -> Math.abs(i.getCurrentFloorNumber() - call.getTargetFloorNumber())))
-                        .collect(Collectors.toList());
-                elevatorLock.unlock();
-            }
-
             if (!suitableElevators.isEmpty()) {
                 suitableElevators.get(0).addCall(call);
+                log.info("call has been dispatched" + call);
             } else {
                 calls.add(call);
             }
@@ -139,10 +130,14 @@ public class Controller implements Runnable, Interruptable {
 
     public void turnOff() {
         isRunning = false;
+
+        log.info("controller has been stopped");
     }
 
     public void turnOn() {
         isRunning = true;
+
+        log.info("controller has been started");
     }
 
     @SneakyThrows

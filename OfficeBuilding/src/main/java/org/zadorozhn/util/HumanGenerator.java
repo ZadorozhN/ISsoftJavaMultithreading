@@ -2,6 +2,7 @@ package org.zadorozhn.util;
 
 import lombok.Getter;
 import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
 import org.zadorozhn.building.Building;
 import org.zadorozhn.building.Floor;
 import org.zadorozhn.human.Human;
@@ -12,11 +13,8 @@ import java.util.concurrent.TimeUnit;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
-public class HumanGenerator implements Runnable, Interruptable {
-    public final static int DEFAULT_OPERATION_TIME = 1100;
-    public final static int MIN_SPEED = 100;
-    public final static int MAX_SPEED = 1000;
-
+@Slf4j
+public class HumanGenerator extends Thread implements Interruptable {
     private final Building building;
     private final int generateSpeed;
     private final int weightFrom;
@@ -36,6 +34,9 @@ public class HumanGenerator implements Runnable, Interruptable {
         this.weightFrom = weightFrom;
         this.building = building;
         this.weightTo = weightTo;
+
+        String threadName = "humanGenerator";
+        this.setName(threadName);
     }
 
     public static HumanGenerator of(Building building, int weightFrom, int weightTo, int generateSpeed) {
@@ -63,9 +64,11 @@ public class HumanGenerator implements Runnable, Interruptable {
 
         floor.addHuman(Human.of(weight, targetFloor, floor));
 
-        StatisticsHolder.getInstance().getNumberOfGeneratedPeople();
+        StatisticsHolder.getInstance().incrementNumberOfGeneratedPeople();
 
         TimeUnit.MILLISECONDS.sleep(DEFAULT_OPERATION_TIME - generateSpeed);
+
+        log.info("human has been generated at " + targetFloor);
     }
 
     public void turnOff() {

@@ -14,12 +14,12 @@ import static org.hamcrest.MatcherAssert.*;
 import static org.hamcrest.Matchers.*;
 
 class HumanTest {
-    public static final int VALID_WEIGHT = 60;
-    public static final int INVALID_WEIGHT = 300;
-    public static final int INVALID_NEGATIVE_WEIGHT = -1;
     public static final int VALID_TARGET_FLOOR_NUMBER = 5;
-    public static final int INVALID_TARGET_FLOOR_NUMBER = -1;
     public static final int VALID_START_FLOOR_NUMBER = 3;
+    public static final int VALID_WEIGHT = 60;
+    public static final int INVALID_TARGET_FLOOR_NUMBER = -1;
+    public static final int INVALID_NEGATIVE_WEIGHT = -1;
+    public static final int INVALID_WEIGHT = 300;
     public static final int NUMBER_OF_FLOORS = 10;
     public static Building building;
 
@@ -103,7 +103,7 @@ class HumanTest {
     }
 
     @Test
-    void pushUpButtonTest(){
+    void pushUpButtonTest() {
         Floor lowerFloor = building.getFloor(0);
         Floor upperFloor = building.getFloor(1);
         Human human = Human.of(VALID_WEIGHT, upperFloor, lowerFloor);
@@ -115,7 +115,7 @@ class HumanTest {
     }
 
     @Test
-    void pushDownButtonTest(){
+    void pushDownButtonTest() {
         Floor lowerFloor = building.getFloor(0);
         Floor upperFloor = building.getFloor(1);
         Human human = Human.of(VALID_WEIGHT, lowerFloor, upperFloor);

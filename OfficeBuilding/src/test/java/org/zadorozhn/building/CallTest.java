@@ -8,10 +8,10 @@ import org.zadorozhn.building.state.Direction;
 import static org.junit.jupiter.api.Assertions.*;
 
 class CallTest {
-    public static final int NUMBER_OF_FLOORS = 10;
     public static final int VALID_FIRST_TARGET_FLOOR_NUMBER = 5;
     public static final int VALID_SECOND_TARGET_FLOOR_NUMBER = 6;
     public static final int INVALID_TARGET_FLOOR_NUMBER = -1;
+    public static final int NUMBER_OF_FLOORS = 10;
 
     static Object[][] directionData() {
         return new Object[][]{
@@ -36,7 +36,7 @@ class CallTest {
 
     @ParameterizedTest
     @MethodSource("directionData")
-    void createCallFromFloorAndDirection(Direction direction){
+    void createCallFromFloorAndDirection(Direction direction) {
         Building building = Building.of(NUMBER_OF_FLOORS);
         Floor firstFloor = building.getFloor(VALID_FIRST_TARGET_FLOOR_NUMBER);
 
@@ -44,7 +44,7 @@ class CallTest {
     }
 
     @Test
-    void createCallFromFloors(){
+    void createCallFromFloors() {
         Building building = Building.of(NUMBER_OF_FLOORS);
         Floor firstFloor = building.getFloor(VALID_FIRST_TARGET_FLOOR_NUMBER);
         Floor secondFloor = building.getFloor(VALID_SECOND_TARGET_FLOOR_NUMBER);
@@ -53,12 +53,12 @@ class CallTest {
     }
 
     @Test
-    void createCallFromFloorsNumber(){
+    void createCallFromFloorsNumber() {
         assertDoesNotThrow(() -> Call.of(VALID_FIRST_TARGET_FLOOR_NUMBER, VALID_SECOND_TARGET_FLOOR_NUMBER));
     }
 
     @Test
-    void createCallFromFloorAndFloorNumber(){
+    void createCallFromFloorAndFloorNumber() {
         Building building = Building.of(NUMBER_OF_FLOORS);
         Floor firstFloor = building.getFloor(VALID_FIRST_TARGET_FLOOR_NUMBER);
 
@@ -66,7 +66,7 @@ class CallTest {
     }
 
     @Test
-    void createIllegalCallWithTheSameFloorAndFloorNumber(){
+    void createIllegalCallWithTheSameFloorAndFloorNumber() {
         Building building = Building.of(NUMBER_OF_FLOORS);
         Floor firstFloor = building.getFloor(VALID_FIRST_TARGET_FLOOR_NUMBER);
 
@@ -75,7 +75,7 @@ class CallTest {
     }
 
     @Test
-    void createCallFromFloorNumberAndFloor(){
+    void createCallFromFloorNumberAndFloor() {
         Building building = Building.of(NUMBER_OF_FLOORS);
         Floor secondFloor = building.getFloor(VALID_SECOND_TARGET_FLOOR_NUMBER);
 
@@ -83,7 +83,7 @@ class CallTest {
     }
 
     @Test
-    void createIllegalCallWithTheSameFloorNumberAndFloor(){
+    void createIllegalCallWithTheSameFloorNumberAndFloor() {
         Building building = Building.of(NUMBER_OF_FLOORS);
         Floor secondFloor = building.getFloor(VALID_SECOND_TARGET_FLOOR_NUMBER);
 

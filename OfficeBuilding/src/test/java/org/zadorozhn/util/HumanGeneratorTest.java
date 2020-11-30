@@ -15,17 +15,17 @@ import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class HumanGeneratorTest {
-    public static final int NUMBER_OF_FLOORS = 10;
     public static final int VALID_SPEED = 500;
-    public static final int INVALID_FAST_SPEED = 2000;
     public static final int INVALID_NEGATIVE_SPEED = -10;
+    public static final int INVALID_FAST_SPEED = 2000;
     public static final int INVALID_SLOW_SPEED = 50;
+    public static final int NUMBER_OF_FLOORS = 10;
 
-    static Object[][] getInvalidSpeedsData(){
+    static Object[][] getInvalidSpeedsData() {
         return new Object[][]{
-            {INVALID_FAST_SPEED},
-            {INVALID_SLOW_SPEED},
-            {INVALID_NEGATIVE_SPEED},
+                {INVALID_FAST_SPEED},
+                {INVALID_SLOW_SPEED},
+                {INVALID_NEGATIVE_SPEED},
         };
     }
 
@@ -62,7 +62,7 @@ class HumanGeneratorTest {
     }
 
     @Test
-    void createHumanGeneratorWithInvalidWeightLimitTest(){
+    void createHumanGeneratorWithInvalidWeightLimitTest() {
         Building building = Building.of(NUMBER_OF_FLOORS);
 
         int invalidMaxWeightLimit = Human.MAX_WEIGHT + 1;
@@ -73,7 +73,7 @@ class HumanGeneratorTest {
     }
 
     @Test
-    void createHumanGeneratorWithSwappedLimitsTest(){
+    void createHumanGeneratorWithSwappedLimitsTest() {
         Building building = Building.of(NUMBER_OF_FLOORS);
 
         assertThrows(IllegalArgumentException.class,
@@ -82,12 +82,13 @@ class HumanGeneratorTest {
 
     @ParameterizedTest
     @MethodSource("getInvalidSpeedsData")
-    void createHumanGeneratorWithInvalidSpeedTest(int invalidSpeed){
+    void createHumanGeneratorWithInvalidSpeedTest(int invalidSpeed) {
         Building building = Building.of(NUMBER_OF_FLOORS);
 
         assertThrows(IllegalArgumentException.class,
                 () -> HumanGenerator.of(building, Human.MAX_WEIGHT, Human.MIN_WEIGHT, invalidSpeed));
     }
+
     @Test
     void generateTest() {
         int numberOfGeneratedHuman = 10;
@@ -105,7 +106,7 @@ class HumanGeneratorTest {
     }
 
     @Test
-    void turnOnTest(){
+    void turnOnTest() {
         Building building = Building.of(NUMBER_OF_FLOORS);
         HumanGenerator humanGenerator = HumanGenerator.of(building);
 
@@ -115,7 +116,7 @@ class HumanGeneratorTest {
     }
 
     @Test
-    void turnOffTest(){
+    void turnOffTest() {
         Building building = Building.of(NUMBER_OF_FLOORS);
         HumanGenerator humanGenerator = HumanGenerator.of(building);
 

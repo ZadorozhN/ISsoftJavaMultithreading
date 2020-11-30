@@ -9,8 +9,6 @@ import org.zadorozhn.building.state.State;
 import org.zadorozhn.human.Human;
 import org.zadorozhn.util.StatisticsHolder;
 import org.zadorozhn.util.interrupt.Interruptable;
-
-import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -24,23 +22,23 @@ import static com.google.common.base.Preconditions.*;
 
 @Slf4j
 public class Elevator implements Runnable, Interruptable {
-    public final static int DEFAULT_OPERATION_TIME = 1100;
-    public final static int MIN_SPEED = 100;
-    public final static int MAX_SPEED = 1000;
     public final static int MIN_CAPACITY = 0;
 
+    @Getter
+    private final UUID id;
     @Getter
     private final int capacity;
     @Getter
     private final int moveSpeed;
     @Getter
     private final int doorWorkSpeed;
+    @Getter
+    private int numberOfDeliveredPeople;
     private int currentFloorNumber;
     private boolean isRunning;
     private Building building;
     private final List<Human> passengers;
     private final List<Call> calls;
-    private final UUID id;
 
     private final Condition elevatorStopCondition;
     private final Lock currentFloorLock;
@@ -73,6 +71,8 @@ public class Elevator implements Runnable, Interruptable {
 
         this.direction = Direction.NONE;
         this.state = State.STOP;
+
+        this.numberOfDeliveredPeople = 0;
     }
 
     public static Elevator of(int capacity) {
@@ -163,7 +163,9 @@ public class Elevator implements Runnable, Interruptable {
 
     public Direction getDestinationDirection() {
         callLock.lock();
+        stateLock.lock();
         Direction direction = calls.isEmpty() ? Direction.NONE : calls.get(0).getDirection();
+        stateLock.unlock();
         callLock.unlock();
 
         return direction;
@@ -210,9 +212,11 @@ public class Elevator implements Runnable, Interruptable {
         callLock.unlock();
 
         stateLock.lock();
+        currentFloorLock.lock();
         if (direction == Direction.NONE) {
             direction = call.getTargetFloorNumber() - currentFloorNumber > 0 ? Direction.UP : Direction.DOWN;
         }
+        currentFloorLock.unlock();
         stateLock.unlock();
 
         log.info("elevator called to " + call);
@@ -298,10 +302,11 @@ public class Elevator implements Runnable, Interruptable {
         checkArgument(passengers.contains(human));
 
         peopleLock.lock();
-        if (passengers.remove(human)) {
-            StatisticsHolder.getInstance().getNumberOfDeliveredPeople();
-        }
+        passengers.remove(human);
         peopleLock.unlock();
+
+        StatisticsHolder.getInstance().incrementNumberOfDeliveredPeople();
+        numberOfDeliveredPeople++;
 
         TimeUnit.MILLISECONDS.sleep(DEFAULT_OPERATION_TIME - doorWorkSpeed);
 
@@ -309,24 +314,25 @@ public class Elevator implements Runnable, Interruptable {
     }
 
     public boolean checkFloor() {
-        Direction destinationDirection = getDestinationDirection();
-        Human human;
-
-        getCurrentFloor().getFloorLock().lock();
-        if (destinationDirection != Direction.NONE) {
-            human = getCurrentFloor().getFirstHuman(destinationDirection);
-        } else {
-            human = getCurrentFloor().getFirstHuman(direction);
-        }
-        getCurrentFloor().getFloorLock().unlock();
-
+        Human human = null;
         boolean result = false;
 
+        getCurrentFloor().getFloorLock().lock();
+        stateLock.lock();
+        Direction destinationDirection = getDestinationDirection();
+        if (!destinationDirection.equals(Direction.NONE) && destinationDirection.equals(direction)) {
+            human = getCurrentFloor().getFirstHuman(direction);
+        }
+        stateLock.unlock();
+        getCurrentFloor().getFloorLock().unlock();
+
+        peopleLock.lock();
         if (human != null && human.getWeight() <= getFreeSpace()) {
             stateLock.lock();
             result = human.getCall().getDirection() == direction;
             stateLock.unlock();
         }
+        peopleLock.unlock();
 
         return result;
     }
@@ -340,45 +346,57 @@ public class Elevator implements Runnable, Interruptable {
         List<Human> peopleForDisembark = passengers.stream()
                 .filter(i -> i.getCall().getTargetFloorNumber() == currentFloorNumber)
                 .collect(Collectors.toList());
-
-        if (passengers.isEmpty() && calls.isEmpty()) {
-            log.info("elevator is empty");
-            direction = Direction.NONE;
-        } else {
-            direction = getDestinationDirection();
-        }
         peopleLock.unlock();
 
         peopleForDisembark.forEach(this::disembark);
+
+        peopleLock.lock();
+        stateLock.lock();
+        if (passengers.isEmpty() && calls.isEmpty()) {
+            log.info("elevator is empty");
+            direction = Direction.NONE;
+        } else if (passengers.isEmpty()) {
+            direction = getDestinationDirection();
+        }
+        stateLock.unlock();
+        peopleLock.unlock();
 
         log.info("elevator has finished disembarking");
 
         while (state == State.LOAD) {
             getCurrentFloor().getFloorLock().lock();
+            stateLock.lock();
             Human human = getCurrentFloor().getFirstHuman(direction);
             Direction destinationDirection = getDestinationDirection();
 
-            if (human != null && ((destinationDirection != Direction.NONE && destinationDirection == human.getCall().getDirection())
-                    || (destinationDirection == Direction.NONE && human.getCall().getDirection() == direction)
-                    || direction == Direction.NONE)) {
+            if (human != null && ((!destinationDirection.equals(Direction.NONE)
+                    && destinationDirection.equals(human.getCall().getDirection()))
+                    || (destinationDirection.equals(Direction.NONE)
+                    && human.getCall().getDirection().equals(direction))
+                    || direction.equals(Direction.NONE))) {
 
                 if (human.getWeight() <= getFreeSpace()) {
-                    if (direction == Direction.NONE) {
+                    if (direction.equals(Direction.NONE)) {
                         direction = human.getCall().getDirection();
                     }
+                    stateLock.unlock();
                     human = getCurrentFloor().pollFirstHuman(direction);
                     getCurrentFloor().getFloorLock().unlock();
                     pickUpHuman(human);
+
+                    log.info("human has been picked up " + human);
                 } else {
+                    stateLock.unlock();
                     getCurrentFloor().getFloorLock().unlock();
                     getController().addCall(Call.of(currentFloorNumber, human.getCall().getDirection()));
 
-                    log.info("elevator cannot pick up human " + human);
+                    log.info("elevator cannot pick up human, 'cause there is not enough space " + human);
                     log.info("elevator recall" + human.getCall());
 
                     break;
                 }
             } else {
+                stateLock.unlock();
                 getCurrentFloor().getFloorLock().unlock();
 
                 break;
@@ -408,7 +426,7 @@ public class Elevator implements Runnable, Interruptable {
         state = State.STOP;
         stateLock.unlock();
 
-        while (calls.size() < 1) {
+        while (calls.isEmpty()) {
             log.info("elevator stopped");
             elevatorStopCondition.await();
         }
@@ -425,14 +443,31 @@ public class Elevator implements Runnable, Interruptable {
         log.info("elevator has finished his way");
     }
 
+    public boolean removeExecutedCalls(){
+        boolean hasExecutedCalls = false;
+
+        callLock.lock();
+        List<Call> currentFloorCalls = calls.stream()
+                .filter(i -> i.getTargetFloorNumber() == currentFloorNumber)
+                .collect(Collectors.toList());
+        hasExecutedCalls = calls.removeAll(currentFloorCalls);
+        callLock.unlock();
+
+        return hasExecutedCalls;
+    }
+
     @Override
     public void turnOff() {
         isRunning = false;
+
+        log.info("elevator has been stopped");
     }
 
     @Override
     public void turnOn() {
         isRunning = true;
+
+        log.info("elevator has been started");
     }
 
     @Override
@@ -444,28 +479,23 @@ public class Elevator implements Runnable, Interruptable {
                 callLock.unlock();
                 stop();
             } else {
-                List<Call> currentFloorCalls = calls.stream()
-                        .filter(i -> i.getTargetFloorNumber() == currentFloorNumber)
-                        .collect(Collectors.toList());
-                calls.removeAll(currentFloorCalls);
+                boolean hasExecutedCalls = removeExecutedCalls();
+                int currentCallFloorNumber = calls.isEmpty()
+                        ? currentFloorNumber
+                        : calls.get(0).getTargetFloorNumber();
+
                 callLock.unlock();
 
-                if (!currentFloorCalls.isEmpty() || checkFloor()) {
+                boolean areWaitingPeopleOnThisFloor = checkFloor();
+
+                if (hasExecutedCalls || areWaitingPeopleOnThisFloor) {
                     openDoor();
                     load();
                     closeDoor();
-                    continue;
-                }
-
-                callLock.lock();
-                if (calls.get(0).getTargetFloorNumber() > currentFloorNumber) {
-                    callLock.unlock();
+                } else if (currentCallFloorNumber > currentFloorNumber) {
                     goUp();
-                } else if (calls.get(0).getTargetFloorNumber() < currentFloorNumber) {
-                    callLock.unlock();
+                } else if (currentCallFloorNumber < currentFloorNumber) {
                     goDown();
-                } else {
-                    callLock.unlock();
                 }
             }
         }
@@ -474,7 +504,7 @@ public class Elevator implements Runnable, Interruptable {
 
     @Override
     public String toString() {
-        return String.format("State: %s; Direction: %s; Calls:%s; Passengers: %s; Free space: %s; "
-                , getState(), getDirection(), getCalls(), getPassengers(), getFreeSpace());
+        return String.format("State: %s; Direction: %s; Free space: %s; PeopleDelivered: %d; Calls: %s; Passengers: %s; "
+                , getState(), getDirection(),  getFreeSpace(), numberOfDeliveredPeople, getCalls(), getPassengers());
     }
 }

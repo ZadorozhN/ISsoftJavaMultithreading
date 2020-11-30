@@ -1,5 +1,7 @@
 package org.zadorozhn.util;
 
+import org.zadorozhn.building.Elevator;
+
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class StatisticsHolder {

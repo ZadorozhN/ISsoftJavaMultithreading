@@ -4,6 +4,7 @@ import lombok.SneakyThrows;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.zadorozhn.building.state.Direction;
 import org.zadorozhn.human.Human;
 import org.zadorozhn.util.HumanGenerator;
 import java.util.concurrent.TimeUnit;
@@ -15,10 +16,10 @@ import static org.hamcrest.Matchers.*;
 
 class BuildingTest {
     public static final int VALID_NUMBER_OF_FLOORS = 5;
+    public static final int VALID_ELEVATOR_CAPACITY = 500;
+    public static final int INVALID_NEGATIVE_NUMBER_OF_FLOORS = -1;
     public static final int INVALID_SMALL_NUMBER_FLOORS = 1;
     public static final int INVALID_ZERO_FLOORS = 0;
-    public static final int INVALID_NEGATIVE_NUMBER_OF_FLOORS = -1;
-    public static final int CAPACITY = 500;
 
     static Object[][] invalidNumberOfFloorsData() {
         return new Object[][]{
@@ -60,23 +61,23 @@ class BuildingTest {
     }
 
     @Test
-    void getNumberOfFloorsTest(){
+    void getNumberOfFloorsTest() {
         Building building = Building.of(VALID_NUMBER_OF_FLOORS);
 
         assertThat(building.getNumberOfFloors(), equalTo(VALID_NUMBER_OF_FLOORS));
     }
 
     @Test
-    void getFloorsTest(){
+    void getFloorsTest() {
         Building building = Building.of(VALID_NUMBER_OF_FLOORS);
 
         assertThat(building.getFloors().size(), equalTo(VALID_NUMBER_OF_FLOORS));
     }
 
     @Test
-    void addElevatorTest(){
+    void addElevatorTest() {
         Building building = Building.of(VALID_NUMBER_OF_FLOORS);
-        Elevator elevator = Elevator.of(CAPACITY);
+        Elevator elevator = Elevator.of(VALID_ELEVATOR_CAPACITY);
 
         building.addElevator(elevator);
 
@@ -85,14 +86,14 @@ class BuildingTest {
     }
 
     @Test
-    void addNullElevatorTest(){
+    void addNullElevatorTest() {
         Building building = Building.of(VALID_NUMBER_OF_FLOORS);
 
         assertThrows(NullPointerException.class, () -> building.addElevator(null));
     }
 
     @Test
-    void addControllerTest(){
+    void addControllerTest() {
         Building building = Building.of(VALID_NUMBER_OF_FLOORS);
         Controller controller = Controller.getEmpty();
 
@@ -102,17 +103,17 @@ class BuildingTest {
     }
 
     @Test
-    void addNullControllerTest(){
+    void addNullControllerTest() {
         Building building = Building.of(VALID_NUMBER_OF_FLOORS);
 
         assertThrows(NullPointerException.class, () -> building.setController(null));
     }
 
     @Test
-    void getElevatorsTest(){
+    void getElevatorsTest() {
         Building building = Building.of(VALID_NUMBER_OF_FLOORS);
-        Elevator firstElevator = Elevator.of(CAPACITY);
-        Elevator secondElevator = Elevator.of(CAPACITY);
+        Elevator firstElevator = Elevator.of(VALID_ELEVATOR_CAPACITY);
+        Elevator secondElevator = Elevator.of(VALID_ELEVATOR_CAPACITY);
 
         building.addElevator(firstElevator).addElevator(secondElevator);
 
@@ -121,8 +122,8 @@ class BuildingTest {
     }
 
     @Test
-    void startElevatorsAndControllerTest(){
-        Elevator elevator = Elevator.of(CAPACITY);
+    void startElevatorsAndControllerTest() {
+        Elevator elevator = Elevator.of(VALID_ELEVATOR_CAPACITY);
         Controller controller = Controller.getEmpty();
 
         Building building = Building.of(VALID_NUMBER_OF_FLOORS)
@@ -132,16 +133,17 @@ class BuildingTest {
         assertDoesNotThrow(building::start);
         assertDoesNotThrow(building::stop);
     }
+
     @Test
-    void startWithNothingTest(){
+    void startWithNothingTest() {
         Building building = Building.of(VALID_NUMBER_OF_FLOORS);
 
         assertThrows(NullPointerException.class, building::start);
     }
 
     @Test
-    void startControllerTest(){
-        Elevator elevator = Elevator.of(CAPACITY);
+    void startControllerTest() {
+        Elevator elevator = Elevator.of(VALID_ELEVATOR_CAPACITY);
         Controller controller = Controller.getEmpty();
 
         Building building = Building.of(VALID_NUMBER_OF_FLOORS)
@@ -153,24 +155,24 @@ class BuildingTest {
     }
 
     @Test
-    void startNullControllerTest(){
+    void startNullControllerTest() {
         Building building = Building.of(VALID_NUMBER_OF_FLOORS)
-                .addElevator(Elevator.of(CAPACITY));
+                .addElevator(Elevator.of(VALID_ELEVATOR_CAPACITY));
 
         assertThrows(NullPointerException.class, building::startController);
     }
 
     @Test
-    void stopNullControllerTest(){
+    void stopNullControllerTest() {
         Building building = Building.of(VALID_NUMBER_OF_FLOORS)
-                .addElevator(Elevator.of(CAPACITY));
+                .addElevator(Elevator.of(VALID_ELEVATOR_CAPACITY));
 
         assertThrows(NullPointerException.class, building::stopController);
     }
 
     @Test
-    void startElevatorsTest(){
-        Elevator elevator = Elevator.of(CAPACITY);
+    void startElevatorsTest() {
+        Elevator elevator = Elevator.of(VALID_ELEVATOR_CAPACITY);
         Controller controller = Controller.getEmpty();
 
         Building building = Building.of(VALID_NUMBER_OF_FLOORS)
@@ -182,7 +184,7 @@ class BuildingTest {
     }
 
     @Test
-    void startNullElevatorsTest(){
+    void startNullElevatorsTest() {
         Building building = Building.of(VALID_NUMBER_OF_FLOORS)
                 .setController(Controller.getEmpty());
 
@@ -190,7 +192,7 @@ class BuildingTest {
     }
 
     @Test
-    void stopNullElevatorsTest(){
+    void stopNullElevatorsTest() {
         Building building = Building.of(VALID_NUMBER_OF_FLOORS)
                 .setController(Controller.getEmpty());
 
@@ -199,11 +201,11 @@ class BuildingTest {
 
     @SneakyThrows
     @Test
-    void deliverPeopleTest(){
+    void deliverPeopleTest() {
         int numberOfGeneratedHuman = 10;
         Building building = Building.of(VALID_NUMBER_OF_FLOORS);
         building.setController(Controller.getEmpty())
-                .addElevator(Elevator.of(CAPACITY, Floor.GROUND_FLOOR, Elevator.MAX_SPEED));
+                .addElevator(Elevator.of(VALID_ELEVATOR_CAPACITY, Floor.GROUND_FLOOR, Elevator.MAX_SPEED));
         HumanGenerator humanGenerator = HumanGenerator.of(building,
                 Human.MIN_WEIGHT, Human.MAX_WEIGHT, HumanGenerator.MAX_SPEED);
 
@@ -213,7 +215,9 @@ class BuildingTest {
 
         TimeUnit.SECONDS.sleep(20);
 
+        int numberOfPeople = building.getFloors().stream().mapToInt(i -> i.getNumberOfPeople(Direction.UP)
+                + i.getNumberOfPeople(Direction.DOWN)).sum();
 
+        assertThat(numberOfPeople, equalTo(0));
     }
-
 }

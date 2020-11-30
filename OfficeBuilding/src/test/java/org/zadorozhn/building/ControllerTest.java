@@ -9,16 +9,16 @@ import static org.hamcrest.MatcherAssert.*;
 import static org.hamcrest.Matchers.*;
 
 public class ControllerTest {
-    public static final int NUMBER_OF_FLOORS = 10;
-    public static final int VALID_ELEVATOR_CAPACITY = 200;
-    public static final int VALID_WEIGHT = 100;
     public static final int VALID_FIRST_TARGET_FLOOR_NUMBER = 5;
     public static final int VALID_SECOND_TARGET_FLOOR_NUMBER = 8;
     public static final int VALID_START_FLOOR_NUMBER = 3;
+    public static final int VALID_ELEVATOR_CAPACITY = 200;
+    public static final int VALID_WEIGHT = 100;
+    public static final int NUMBER_OF_FLOORS = 10;
     public static Building building;
 
     @BeforeEach
-    void init(){
+    void init() {
         building = Building.of(NUMBER_OF_FLOORS);
     }
 
@@ -44,7 +44,7 @@ public class ControllerTest {
     }
 
     @Test
-    void addCallTest(){
+    void addCallTest() {
         Controller controller = Controller.getEmpty();
         building.addElevator(Elevator.of(VALID_ELEVATOR_CAPACITY)).setController(controller);
         Human firstHuman = Human.of(VALID_WEIGHT,
@@ -56,7 +56,7 @@ public class ControllerTest {
     }
 
     @Test
-    void removeCallTest(){
+    void removeCallTest() {
         Controller controller = Controller.getEmpty();
         building.addElevator(Elevator.of(VALID_ELEVATOR_CAPACITY)).setController(controller);
         Human firstHuman = Human.of(VALID_WEIGHT,
@@ -69,7 +69,7 @@ public class ControllerTest {
     }
 
     @Test
-    void dispatchCallTest(){
+    void dispatchCallTest() {
         Controller controller = Controller.getEmpty();
         Elevator elevator = Elevator.of(VALID_ELEVATOR_CAPACITY);
         Human firstHuman = Human.of(VALID_WEIGHT,
@@ -86,7 +86,7 @@ public class ControllerTest {
     }
 
     @Test
-    void dispatchCallToIdleElevatorTest(){
+    void dispatchCallToIdleElevatorTest() {
         Controller controller = Controller.getEmpty();
         Elevator stoppedElevator = Elevator.of(VALID_ELEVATOR_CAPACITY);
         Elevator movingElevator = Elevator.of(VALID_ELEVATOR_CAPACITY);
@@ -108,7 +108,7 @@ public class ControllerTest {
     }
 
     @Test
-    void dispatchCallToTheNearestElevatorTest(){
+    void dispatchCallToTheNearestElevatorTest() {
         int firstFloor = 0;
         int secondFloor = 1;
 
@@ -131,35 +131,9 @@ public class ControllerTest {
     }
 
     @Test
-    void dispatchCallToTheNearestMovingElevatorTest(){
-        int firstFloor = 0;
-        int secondFloor = 1;
-
-        Controller controller = Controller.getEmpty();
-        Elevator farthestElevator = Elevator.of(VALID_ELEVATOR_CAPACITY, firstFloor);
-        Elevator nearestElevator = Elevator.of(VALID_ELEVATOR_CAPACITY, secondFloor);
-
-        Building.of(NUMBER_OF_FLOORS).setController(controller)
-                .addElevator(nearestElevator)
-                .addElevator(farthestElevator);
-
-        Call call = Call.of(VALID_SECOND_TARGET_FLOOR_NUMBER, VALID_START_FLOOR_NUMBER);
-
-        farthestElevator.goUp();
-        nearestElevator.goUp();
-
-        controller.addCall(call);
-        controller.dispatchCall();
-
-        assertThat(controller.getAllCalls(), not(hasItem(call)));
-        assertThat(nearestElevator.getCalls(), hasItem(call));
-        assertThat(farthestElevator.getCalls(), not(hasItem(call)));
-    }
-
-    @Test
-    void doNotDispatchCallToNotSuitableElevatorTest(){
+    void doNotDispatchCallToNotSuitableElevatorTest() {
         int firstFloor = 5;
-        int secondFloor = 5;
+        int secondFloor = 1;
 
         Controller controller = Controller.getEmpty();
         Elevator firstElevator = Elevator.of(VALID_ELEVATOR_CAPACITY, firstFloor);
@@ -183,7 +157,7 @@ public class ControllerTest {
     }
 
     @Test
-    void turnOnTest(){
+    void turnOnTest() {
         Controller controller = Controller.getEmpty();
 
         controller.turnOn();
@@ -192,7 +166,7 @@ public class ControllerTest {
     }
 
     @Test
-    void turnOffTest(){
+    void turnOffTest() {
         Controller controller = Controller.getEmpty();
 
         controller.turnOn();
