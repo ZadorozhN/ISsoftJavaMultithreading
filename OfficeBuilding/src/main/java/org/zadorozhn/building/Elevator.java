@@ -450,7 +450,7 @@ public class Elevator implements Runnable, Interruptible {
         state = State.END;
         stateLock.unlock();
 
-        log.info("elevator has finished his way");
+        log.warn("elevator has finished his way");
     }
 
     public boolean removeExecutedCalls(){

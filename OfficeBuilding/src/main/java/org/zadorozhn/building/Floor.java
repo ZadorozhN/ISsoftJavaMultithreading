@@ -71,6 +71,8 @@ public class Floor {
             enqueue(queueDown, human);
         }
         floorLock.unlock();
+
+        log.info(String.format("human has been added to %s", human));
     }
 
     public int getNumberOfPeople(Direction direction) {
@@ -111,6 +113,8 @@ public class Floor {
                     && getController().canCallElevator(getFirstHuman(direction).getCall())) {
                 callElevator(direction);
             }
+
+            log.info("human has been polled " + human);
         }
         floorLock.unlock();
 
