@@ -9,6 +9,8 @@ import org.zadorozhn.building.state.State;
 import org.zadorozhn.human.Human;
 import org.zadorozhn.util.StatisticsHolder;
 import org.zadorozhn.util.interrupt.Interruptible;
+
+import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -131,6 +133,7 @@ public class Elevator implements Runnable, Interruptible {
         return floor;
     }
 
+    @Nullable
     public Controller getController() {
         checkNotNull(building);
 

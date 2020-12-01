@@ -32,7 +32,7 @@ public class Building {
         this.numberOfFloors = numberOfFloors;
         this.elevators = new ArrayList<>();
         this.floors = new ArrayList<>();
-        
+
         IntStream.range(Floor.GROUND_FLOOR, numberOfFloors).forEachOrdered(i -> floors.add(Floor.of(i, this)));
     }
 

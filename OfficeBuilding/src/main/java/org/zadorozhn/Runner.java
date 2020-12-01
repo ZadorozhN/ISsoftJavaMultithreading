@@ -10,7 +10,7 @@ import org.zadorozhn.util.UserInterface;
 public class Runner {
     public static void main(String[] args){
         int numberOfFloors = 10;
-        int capacityOfElevator = 5000;
+        int capacityOfElevator = 500;
         int startFloorNumber = 0;
         int movingSpeed = 100;
         int doorWorkSpeed = 100;

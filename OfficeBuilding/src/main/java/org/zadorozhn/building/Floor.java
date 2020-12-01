@@ -46,6 +46,7 @@ public class Floor {
         this.floorLockCondition = floorLock.newCondition();
     }
 
+    @Nullable
     public Controller getController() {
         return building.getController();
     }
@@ -56,6 +57,7 @@ public class Floor {
 
     public void callElevator(Direction direction) {
         checkNotNull(direction);
+        checkNotNull(getController());
 
         getController().addCall(Call.of(floorNumber, direction));
     }
