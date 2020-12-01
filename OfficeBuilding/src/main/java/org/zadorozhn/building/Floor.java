@@ -46,8 +46,9 @@ public class Floor {
         this.floorLockCondition = floorLock.newCondition();
     }
 
-    @Nullable
     public Controller getController() {
+        checkNotNull(building.getController());
+
         return building.getController();
     }
 

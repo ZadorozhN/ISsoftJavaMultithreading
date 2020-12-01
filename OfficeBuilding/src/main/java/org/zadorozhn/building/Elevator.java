@@ -133,9 +133,9 @@ public class Elevator implements Runnable, Interruptible {
         return floor;
     }
 
-    @Nullable
     public Controller getController() {
         checkNotNull(building);
+        checkNotNull(building.getController());
 
         return building.getController();
     }
