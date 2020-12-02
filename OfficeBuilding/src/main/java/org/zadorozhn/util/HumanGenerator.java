@@ -82,8 +82,14 @@ public class HumanGenerator extends Thread implements Interruptible {
     @Override
     public void run() {
         turnOn();
-        while (isRunning) {
-            generate();
+
+        try {
+            while (isRunning) {
+                generate();
+            }
+        } catch (RuntimeException exception) {
+            log.error(exception.getMessage());
+            log.error(exception.getCause().getMessage());
         }
     }
 }

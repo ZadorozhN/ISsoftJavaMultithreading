@@ -352,7 +352,7 @@ public class Elevator implements Runnable, Interruptible {
         log.info("elevator finishes load");
     }
 
-    private void handleDisembark(){
+    private void handleDisembark() {
         peopleLock.lock();
         List<Human> peopleForDisembark = passengers.stream()
                 .filter(i -> i.getCall().getTargetFloorNumber() == currentFloorNumber)
@@ -364,7 +364,7 @@ public class Elevator implements Runnable, Interruptible {
         log.info("elevator has finished disembarking");
     }
 
-    private void handleLoadDirectionState(){
+    private void handleLoadDirectionState() {
         peopleLock.lock();
         stateLock.lock();
         if (passengers.isEmpty() && calls.isEmpty()) {
@@ -377,7 +377,7 @@ public class Elevator implements Runnable, Interruptible {
         peopleLock.unlock();
     }
 
-    private void handleEmbark(){
+    private void handleEmbark() {
         while (state == State.LOAD) {
             getCurrentFloor().getFloorLock().lock();
             stateLock.lock();
@@ -456,7 +456,7 @@ public class Elevator implements Runnable, Interruptible {
         log.warn("elevator has finished his way");
     }
 
-    public boolean removeExecutedCalls(){
+    public boolean removeExecutedCalls() {
         boolean hasExecutedCalls = false;
 
         callLock.lock();
@@ -491,31 +491,36 @@ public class Elevator implements Runnable, Interruptible {
 
         turnOn();
 
-        while (isRunning) {
-            callLock.lock();
-            if (calls.isEmpty()) {
-                callLock.unlock();
-                stop();
-            } else {
-                hasExecutedCalls = removeExecutedCalls();
-                currentCallFloorNumber = calls.isEmpty()
-                        ? currentFloorNumber
-                        : calls.get(0).getTargetFloorNumber();
+        try {
+            while (isRunning) {
+                callLock.lock();
+                if (calls.isEmpty()) {
+                    callLock.unlock();
+                    stop();
+                } else {
+                    hasExecutedCalls = removeExecutedCalls();
+                    currentCallFloorNumber = calls.isEmpty()
+                            ? currentFloorNumber
+                            : calls.get(0).getTargetFloorNumber();
 
-                callLock.unlock();
+                    callLock.unlock();
 
-                areWaitingPeopleOnThisFloor = checkFloor();
+                    areWaitingPeopleOnThisFloor = checkFloor();
 
-                if (hasExecutedCalls || areWaitingPeopleOnThisFloor) {
-                    openDoor();
-                    load();
-                    closeDoor();
-                } else if (currentCallFloorNumber > currentFloorNumber) {
-                    goUp();
-                } else if (currentCallFloorNumber < currentFloorNumber) {
-                    goDown();
+                    if (hasExecutedCalls || areWaitingPeopleOnThisFloor) {
+                        openDoor();
+                        load();
+                        closeDoor();
+                    } else if (currentCallFloorNumber > currentFloorNumber) {
+                        goUp();
+                    } else if (currentCallFloorNumber < currentFloorNumber) {
+                        goDown();
+                    }
                 }
             }
+        } catch (RuntimeException exception) {
+            log.error(exception.getMessage());
+            log.error(exception.getCause().getMessage());
         }
 
         end();
@@ -524,6 +529,6 @@ public class Elevator implements Runnable, Interruptible {
     @Override
     public String toString() {
         return String.format("State: %s; Direction: %s; Free space: %s; PeopleDelivered: %d; Calls: %s; Passengers: %s; "
-                , getState(), getDirection(),  getFreeSpace(), numberOfDeliveredPeople, getCalls(), getPassengers());
+                , getState(), getDirection(), getFreeSpace(), numberOfDeliveredPeople, getCalls(), getPassengers());
     }
 }

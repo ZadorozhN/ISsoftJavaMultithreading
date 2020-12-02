@@ -143,11 +143,17 @@ public class Controller implements Runnable, Interruptible {
     @Override
     public void run() {
         turnOn();
-        while (isRunning) {
-            while (calls.isEmpty()) {
-                waitCall();
+
+        try {
+            while (isRunning) {
+                while (calls.isEmpty()) {
+                    waitCall();
+                }
+                dispatchCall();
             }
-            dispatchCall();
+        } catch (RuntimeException exception) {
+            log.error(exception.getMessage());
+            log.error(exception.getCause().getMessage());
         }
     }
 }
