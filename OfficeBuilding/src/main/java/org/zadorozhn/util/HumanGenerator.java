@@ -68,7 +68,7 @@ public class HumanGenerator extends Thread implements Interruptible {
 
         TimeUnit.MILLISECONDS.sleep(DEFAULT_OPERATION_TIME - generateSpeed);
 
-        log.info("human has been generated at " + targetFloor);
+        log.info("human has been generated at {}", targetFloor);
     }
 
     public void turnOff() {

@@ -75,7 +75,7 @@ public class Floor {
         }
         floorLock.unlock();
 
-        log.info(String.format("human has been added to %s", human));
+        log.info("human has been added to {}", human);
     }
 
     public int getNumberOfPeople(Direction direction) {
@@ -117,7 +117,7 @@ public class Floor {
                 callElevator(direction);
             }
 
-            log.info("human has been polled " + human);
+            log.info("human has been polled {}", human);
         }
         floorLock.unlock();
 

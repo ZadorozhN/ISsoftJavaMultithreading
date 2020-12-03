@@ -44,12 +44,12 @@ public class Elevator implements Runnable, Interruptible {
     private final Lock callLock;
 
     @Getter
-    private int numberOfDeliveredPeople;
-    private int currentFloorNumber;
-    private boolean isRunning;
-    private Building building;
-    private Direction direction;
-    private State state;
+    private volatile int numberOfDeliveredPeople;
+    private volatile int currentFloorNumber;
+    private volatile boolean isRunning;
+    private volatile Building building;
+    private volatile Direction direction;
+    private volatile State state;
 
     private Elevator(int capacity, int currentFloorNumber, int moveSpeed, int doorWorkSpeed) {
         checkArgument(capacity > MIN_CAPACITY);
@@ -222,7 +222,7 @@ public class Elevator implements Runnable, Interruptible {
         currentFloorLock.unlock();
         stateLock.unlock();
 
-        log.info("elevator called to " + call);
+        log.info("elevator called to {}", call);
     }
 
     @SneakyThrows
@@ -242,7 +242,7 @@ public class Elevator implements Runnable, Interruptible {
 
         TimeUnit.MILLISECONDS.sleep(DEFAULT_OPERATION_TIME - moveSpeed);
 
-        log.info("elevator moved to floor number " + currentFloorNumber);
+        log.info("elevator moved to floor number {}", currentFloorNumber);
     }
 
     @SneakyThrows
@@ -262,7 +262,7 @@ public class Elevator implements Runnable, Interruptible {
 
         TimeUnit.MILLISECONDS.sleep(DEFAULT_OPERATION_TIME - moveSpeed);
 
-        log.info("elevator moved to floor number " + currentFloorNumber);
+        log.info("elevator moved to floor number {}", currentFloorNumber);
     }
 
     @SneakyThrows
@@ -296,7 +296,7 @@ public class Elevator implements Runnable, Interruptible {
 
         TimeUnit.MILLISECONDS.sleep(DEFAULT_OPERATION_TIME - doorWorkSpeed);
 
-        log.info("elevator pick up the next human: " + human);
+        log.info("elevator pick up the next human: {}", human);
     }
 
     @SneakyThrows
@@ -313,7 +313,7 @@ public class Elevator implements Runnable, Interruptible {
 
         TimeUnit.MILLISECONDS.sleep(DEFAULT_OPERATION_TIME - doorWorkSpeed);
 
-        log.info("elevator disembark the next human: " + human);
+        log.info("elevator disembark the next human: {}", human);
     }
 
     public boolean checkFloor() {
@@ -399,14 +399,14 @@ public class Elevator implements Runnable, Interruptible {
                     getCurrentFloor().getFloorLock().unlock();
                     pickUpHuman(human);
 
-                    log.info("human has been picked up " + human);
+                    log.info("human has been picked up {}", human);
                 } else {
                     stateLock.unlock();
                     getCurrentFloor().getFloorLock().unlock();
                     getController().addCall(Call.of(currentFloorNumber, human.getCall().getDirection()));
 
-                    log.info("elevator cannot pick up human, 'cause there is not enough space " + human);
-                    log.info("elevator recall" + human.getCall());
+                    log.info("elevator cannot pick up human, 'cause there is not enough space {}", human);
+                    log.info("elevator recall {}", human.getCall());
 
                     break;
                 }
@@ -521,9 +521,10 @@ public class Elevator implements Runnable, Interruptible {
         } catch (RuntimeException exception) {
             log.error(exception.getMessage());
             log.error(exception.getCause().getMessage());
+        } finally {
+            turnOff();
+            end();
         }
-
-        end();
     }
 
     @Override

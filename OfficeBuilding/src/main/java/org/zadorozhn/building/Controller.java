@@ -22,11 +22,12 @@ public class Controller implements Runnable, Interruptible {
     private List<Elevator> elevators;
     private final Queue<Call> calls;
 
-    @Getter
-    private boolean isRunning;
     private final Condition controllerStopCondition;
     private final Lock callLock;
     private final Lock elevatorLock;
+
+    @Getter
+    private volatile boolean isRunning;
 
     private Controller() {
         this.elevators = new ArrayList<>();
@@ -72,7 +73,7 @@ public class Controller implements Runnable, Interruptible {
         controllerStopCondition.signal();
         callLock.unlock();
 
-        log.info("call added: " + call.getTargetFloorNumber());
+        log.info("call added: {}", call.getTargetFloorNumber());
     }
 
     public void removeCall(Call call) {
@@ -82,7 +83,7 @@ public class Controller implements Runnable, Interruptible {
         calls.removeAll(calls.stream().filter(call::equals).collect(Collectors.toList()));
         callLock.unlock();
 
-        log.info("call has been removed" + call);
+        log.info("call has been removed {}", call);
     }
 
     public void dispatchCall() {
@@ -103,7 +104,7 @@ public class Controller implements Runnable, Interruptible {
 
             if (!suitableElevators.isEmpty()) {
                 suitableElevators.get(0).addCall(call);
-                log.info("call has been dispatched" + call);
+                log.info("call has been dispatched {}", call);
             } else {
                 calls.add(call);
             }

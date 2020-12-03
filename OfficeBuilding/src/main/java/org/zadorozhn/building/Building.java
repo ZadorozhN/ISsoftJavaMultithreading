@@ -19,11 +19,12 @@ public class Building {
 
     @Getter
     private final int numberOfFloors;
-    @Getter
-    private Controller controller;
     private final List<Floor> floors;
     private final List<Elevator> elevators;
     private final Lock buildingLock;
+
+    @Getter
+    private volatile Controller controller;
 
     private Building(int numberOfFloors) {
         checkArgument(numberOfFloors >= MIN_NUMBER_OF_FLOORS);
