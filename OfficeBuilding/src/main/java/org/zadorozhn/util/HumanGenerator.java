@@ -1,7 +1,6 @@
 package org.zadorozhn.util;
 
 import lombok.Getter;
-import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.zadorozhn.building.Building;
 import org.zadorozhn.building.Floor;
@@ -23,6 +22,8 @@ public class HumanGenerator extends Thread implements Interruptible {
     @Getter
     public boolean isRunning;
 
+    private final Random random;
+
     private HumanGenerator(Building building, int weightFrom, int weightTo, int generateSpeed) {
         checkArgument(generateSpeed >= MIN_SPEED && generateSpeed <= MAX_SPEED);
         checkArgument(weightFrom >= Human.MIN_WEIGHT);
@@ -34,6 +35,7 @@ public class HumanGenerator extends Thread implements Interruptible {
         this.weightFrom = weightFrom;
         this.building = building;
         this.weightTo = weightTo;
+        this.random = new Random();
 
         String threadName = "humanGenerator";
         this.setName(threadName);
@@ -51,9 +53,7 @@ public class HumanGenerator extends Thread implements Interruptible {
         return new HumanGenerator(building, Human.MIN_WEIGHT, Human.MAX_WEIGHT, MIN_SPEED);
     }
 
-    @SneakyThrows
     public void generate() {
-        Random random = new Random();
         Floor floor = building.getFloor(Math.abs(random.nextInt()) % building.getNumberOfFloors());
         int weight = Math.abs(random.nextInt()) % (weightTo - weightFrom) + weightFrom;
         int targetFloor;
@@ -66,7 +66,14 @@ public class HumanGenerator extends Thread implements Interruptible {
 
         StatisticsHolder.getInstance().incrementNumberOfGeneratedPeople();
 
-        TimeUnit.MILLISECONDS.sleep(DEFAULT_OPERATION_TIME - generateSpeed);
+        try {
+            TimeUnit.MILLISECONDS.sleep(DEFAULT_OPERATION_TIME - generateSpeed);
+        } catch (InterruptedException exception) {
+            log.error("human generator has been interrupted");
+            log.error(exception.getMessage());
+
+            Thread.currentThread().interrupt();
+        }
 
         log.info("human has been generated at {}", targetFloor);
     }
@@ -82,14 +89,8 @@ public class HumanGenerator extends Thread implements Interruptible {
     @Override
     public void run() {
         turnOn();
-
-        try {
-            while (isRunning) {
-                generate();
-            }
-        } catch (RuntimeException exception) {
-            log.error(exception.getMessage());
-            log.error(exception.getCause().getMessage());
+        while (isRunning && !isInterrupted()) {
+            generate();
         }
     }
 }

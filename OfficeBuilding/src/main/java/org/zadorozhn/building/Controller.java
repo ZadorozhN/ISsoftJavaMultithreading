@@ -2,7 +2,6 @@ package org.zadorozhn.building;
 
 import lombok.Getter;
 import lombok.Setter;
-import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.zadorozhn.building.state.Direction;
 import org.zadorozhn.building.state.State;
@@ -113,10 +112,18 @@ public class Controller implements Runnable, Interruptible {
         callLock.unlock();
     }
 
-    @SneakyThrows
     public void waitCall() {
         callLock.lock();
-        controllerStopCondition.await();
+        while (calls.isEmpty()) {
+            try {
+                controllerStopCondition.await();
+            } catch (InterruptedException exception) {
+                log.error("controller cannot wait, cause it was interrupted");
+                log.error(exception.getMessage());
+
+                Thread.currentThread().interrupt();
+            }
+        }
         callLock.unlock();
     }
 
@@ -140,21 +147,15 @@ public class Controller implements Runnable, Interruptible {
         log.info("controller has been started");
     }
 
-    @SneakyThrows
     @Override
     public void run() {
         turnOn();
 
-        try {
-            while (isRunning) {
-                while (calls.isEmpty()) {
-                    waitCall();
-                }
-                dispatchCall();
+        while (isRunning) {
+            while (calls.isEmpty()) {
+                waitCall();
             }
-        } catch (RuntimeException exception) {
-            log.error(exception.getMessage());
-            log.error(exception.getCause().getMessage());
+            dispatchCall();
         }
     }
 }

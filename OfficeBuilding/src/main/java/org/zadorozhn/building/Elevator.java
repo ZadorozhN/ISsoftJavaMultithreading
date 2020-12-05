@@ -2,19 +2,17 @@ package org.zadorozhn.building;
 
 import com.google.common.collect.ImmutableList;
 import lombok.Getter;
-import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.zadorozhn.building.state.Direction;
 import org.zadorozhn.building.state.State;
 import org.zadorozhn.human.Human;
 import org.zadorozhn.util.StatisticsHolder;
 import org.zadorozhn.util.interrupt.Interruptible;
-
-import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -24,7 +22,7 @@ import static com.google.common.base.Preconditions.*;
 
 @Slf4j
 public class Elevator implements Runnable, Interruptible {
-    public final static int MIN_CAPACITY = 0;
+    public static final int MIN_CAPACITY = 0;
 
     @Getter
     private final UUID id;
@@ -44,8 +42,8 @@ public class Elevator implements Runnable, Interruptible {
     private final Lock callLock;
 
     @Getter
-    private volatile int numberOfDeliveredPeople;
-    private volatile int currentFloorNumber;
+    private final AtomicInteger numberOfDeliveredPeople;
+    private final AtomicInteger currentFloorNumber;
     private volatile boolean isRunning;
     private volatile Building building;
     private volatile Direction direction;
@@ -60,7 +58,7 @@ public class Elevator implements Runnable, Interruptible {
         this.capacity = capacity;
         this.moveSpeed = moveSpeed;
         this.doorWorkSpeed = doorWorkSpeed;
-        this.currentFloorNumber = currentFloorNumber;
+        this.currentFloorNumber = new AtomicInteger(currentFloorNumber);
 
         this.currentFloorLock = new ReentrantLock(true);
         this.peopleLock = new ReentrantLock(true);
@@ -74,7 +72,7 @@ public class Elevator implements Runnable, Interruptible {
         this.direction = Direction.NONE;
         this.state = State.STOP;
 
-        this.numberOfDeliveredPeople = 0;
+        this.numberOfDeliveredPeople = new AtomicInteger(0);
     }
 
     public static Elevator of(int capacity) {
@@ -119,7 +117,7 @@ public class Elevator implements Runnable, Interruptible {
 
     public int getCurrentFloorNumber() {
         currentFloorLock.lock();
-        int floor = currentFloorNumber;
+        int floor = currentFloorNumber.get();
         currentFloorLock.unlock();
 
         return floor;
@@ -127,7 +125,7 @@ public class Elevator implements Runnable, Interruptible {
 
     public Floor getCurrentFloor() {
         currentFloorLock.lock();
-        Floor floor = building.getFloor(currentFloorNumber);
+        Floor floor = building.getFloor(currentFloorNumber.get());
         currentFloorLock.unlock();
 
         return floor;
@@ -150,28 +148,28 @@ public class Elevator implements Runnable, Interruptible {
 
     public State getState() {
         stateLock.lock();
-        State state = this.state;
+        State currentState = this.state;
         stateLock.unlock();
 
-        return state;
+        return currentState;
     }
 
     public Direction getDirection() {
         stateLock.lock();
-        Direction direction = this.direction;
+        Direction currentDirection = this.direction;
         stateLock.unlock();
 
-        return direction;
+        return currentDirection;
     }
 
     public Direction getDestinationDirection() {
         callLock.lock();
         stateLock.lock();
-        Direction direction = calls.isEmpty() ? Direction.NONE : calls.get(0).getDirection();
+        Direction currentDirection = calls.isEmpty() ? Direction.NONE : calls.get(0).getDirection();
         stateLock.unlock();
         callLock.unlock();
 
-        return direction;
+        return currentDirection;
     }
 
     public int getFreeSpace() {
@@ -217,7 +215,7 @@ public class Elevator implements Runnable, Interruptible {
         stateLock.lock();
         currentFloorLock.lock();
         if (direction == Direction.NONE) {
-            direction = call.getTargetFloorNumber() - currentFloorNumber > 0 ? Direction.UP : Direction.DOWN;
+            direction = call.getTargetFloorNumber() - currentFloorNumber.get() > 0 ? Direction.UP : Direction.DOWN;
         }
         currentFloorLock.unlock();
         stateLock.unlock();
@@ -225,7 +223,6 @@ public class Elevator implements Runnable, Interruptible {
         log.info("elevator called to {}", call);
     }
 
-    @SneakyThrows
     public void goUp() {
         checkState(getCurrentFloorNumber() < building.getNumberOfFloors());
 
@@ -235,19 +232,27 @@ public class Elevator implements Runnable, Interruptible {
         stateLock.unlock();
 
         currentFloorLock.lock();
-        currentFloorNumber++;
+        currentFloorNumber.incrementAndGet();
         currentFloorLock.unlock();
 
         StatisticsHolder.getInstance().incrementNumberOfPassedFloors();
 
-        TimeUnit.MILLISECONDS.sleep(DEFAULT_OPERATION_TIME - moveSpeed);
+        try {
+            TimeUnit.MILLISECONDS.sleep(DEFAULT_OPERATION_TIME - moveSpeed);
+        } catch (InterruptedException exception){
+            log.error("elevator cannot go up, cause it was interrupted");
+            log.error(exception.getMessage());
+
+            end();
+            turnOff();
+            Thread.currentThread().interrupt();
+        }
 
         log.info("elevator moved to floor number {}", currentFloorNumber);
     }
 
-    @SneakyThrows
     public void goDown() {
-        checkState(currentFloorNumber > Floor.GROUND_FLOOR);
+        checkState(currentFloorNumber.get() > Floor.GROUND_FLOOR);
 
         stateLock.lock();
         direction = Direction.DOWN;
@@ -255,28 +260,44 @@ public class Elevator implements Runnable, Interruptible {
         stateLock.unlock();
 
         currentFloorLock.lock();
-        currentFloorNumber--;
+        currentFloorNumber.decrementAndGet();
         currentFloorLock.unlock();
 
         StatisticsHolder.getInstance().incrementNumberOfPassedFloors();
 
-        TimeUnit.MILLISECONDS.sleep(DEFAULT_OPERATION_TIME - moveSpeed);
+        try {
+            TimeUnit.MILLISECONDS.sleep(DEFAULT_OPERATION_TIME - moveSpeed);
+        } catch (InterruptedException exception){
+            log.error("elevator cannot go down, cause it was interrupted");
+            log.error(exception.getMessage());
+
+            end();
+            turnOff();
+            Thread.currentThread().interrupt();
+        }
 
         log.info("elevator moved to floor number {}", currentFloorNumber);
     }
 
-    @SneakyThrows
     public void openDoor() {
         stateLock.lock();
         state = State.OPEN_DOOR;
         stateLock.unlock();
 
-        TimeUnit.MILLISECONDS.sleep(DEFAULT_OPERATION_TIME - doorWorkSpeed);
+        try {
+            TimeUnit.MILLISECONDS.sleep(DEFAULT_OPERATION_TIME - doorWorkSpeed);
+        } catch (InterruptedException exception){
+            log.error("elevator cannot open door, cause it was interrupted");
+            log.error(exception.getMessage());
+
+            end();
+            turnOff();
+            Thread.currentThread().interrupt();
+        }
 
         log.info("elevator has opened his door");
     }
 
-    @SneakyThrows
     public void pickUpHuman(Human human) {
         checkNotNull(human);
 
@@ -294,12 +315,20 @@ public class Elevator implements Runnable, Interruptible {
 
         addCall(human.getCall());
 
-        TimeUnit.MILLISECONDS.sleep(DEFAULT_OPERATION_TIME - doorWorkSpeed);
+        try {
+            TimeUnit.MILLISECONDS.sleep(DEFAULT_OPERATION_TIME - doorWorkSpeed);
+        } catch (InterruptedException exception){
+            log.error("elevator cannot pickup human, cause it was interrupted");
+            log.error(exception.getMessage());
+
+            end();
+            turnOff();
+            Thread.currentThread().interrupt();
+        }
 
         log.info("elevator pick up the next human: {}", human);
     }
 
-    @SneakyThrows
     public void disembark(Human human) {
         checkNotNull(human);
         checkArgument(passengers.contains(human));
@@ -309,9 +338,18 @@ public class Elevator implements Runnable, Interruptible {
         peopleLock.unlock();
 
         StatisticsHolder.getInstance().incrementNumberOfDeliveredPeople();
-        numberOfDeliveredPeople++;
+        numberOfDeliveredPeople.incrementAndGet();
 
-        TimeUnit.MILLISECONDS.sleep(DEFAULT_OPERATION_TIME - doorWorkSpeed);
+        try {
+            TimeUnit.MILLISECONDS.sleep(DEFAULT_OPERATION_TIME - doorWorkSpeed);
+        } catch (InterruptedException exception){
+            log.error("elevator cannot disembark human, cause it was interrupted");
+            log.error(exception.getMessage());
+
+            end();
+            turnOff();
+            Thread.currentThread().interrupt();
+        }
 
         log.info("elevator disembark the next human: {}", human);
     }
@@ -355,7 +393,7 @@ public class Elevator implements Runnable, Interruptible {
     private void handleDisembark() {
         peopleLock.lock();
         List<Human> peopleForDisembark = passengers.stream()
-                .filter(i -> i.getCall().getTargetFloorNumber() == currentFloorNumber)
+                .filter(i -> i.getCall().getTargetFloorNumber() == currentFloorNumber.get())
                 .collect(Collectors.toList());
         peopleLock.unlock();
 
@@ -378,7 +416,8 @@ public class Elevator implements Runnable, Interruptible {
     }
 
     private void handleEmbark() {
-        while (state == State.LOAD) {
+        boolean isEmbarking = true;
+        while (state == State.LOAD && isEmbarking) {
             getCurrentFloor().getFloorLock().lock();
             stateLock.lock();
             Human human = getCurrentFloor().getFirstHuman(direction);
@@ -403,34 +442,41 @@ public class Elevator implements Runnable, Interruptible {
                 } else {
                     stateLock.unlock();
                     getCurrentFloor().getFloorLock().unlock();
-                    getController().addCall(Call.of(currentFloorNumber, human.getCall().getDirection()));
+                    getController().addCall(Call.of(currentFloorNumber.get(), human.getCall().getDirection()));
 
                     log.info("elevator cannot pick up human, 'cause there is not enough space {}", human);
                     log.info("elevator recall {}", human.getCall());
 
-                    break;
+                    isEmbarking = false;
                 }
             } else {
                 stateLock.unlock();
                 getCurrentFloor().getFloorLock().unlock();
 
-                break;
+                isEmbarking = false;
             }
         }
     }
 
-    @SneakyThrows
     public void closeDoor() {
         stateLock.lock();
         state = State.CLOSE_DOOR;
         stateLock.unlock();
 
-        TimeUnit.MILLISECONDS.sleep(DEFAULT_OPERATION_TIME - doorWorkSpeed);
+        try {
+            TimeUnit.MILLISECONDS.sleep(DEFAULT_OPERATION_TIME - doorWorkSpeed);
+        } catch (InterruptedException exception){
+            log.error("elevator cannot close door, cause it was interrupted");
+            log.error(exception.getMessage());
+
+            end();
+            turnOff();
+            Thread.currentThread().interrupt();
+        }
 
         log.info("elevator has closed his door");
     }
 
-    @SneakyThrows
     public void stop() {
         callLock.lock();
 
@@ -441,7 +487,17 @@ public class Elevator implements Runnable, Interruptible {
 
         while (calls.isEmpty()) {
             log.info("elevator stopped");
-            elevatorStopCondition.await();
+
+            try {
+                elevatorStopCondition.await();
+            } catch (InterruptedException exception){
+                log.error("elevator cannot be stopped, cause it was interrupted");
+                log.error(exception.getMessage());
+
+                end();
+                turnOff();
+                Thread.currentThread().interrupt();
+            }
         }
 
         callLock.unlock();
@@ -461,7 +517,7 @@ public class Elevator implements Runnable, Interruptible {
 
         callLock.lock();
         List<Call> currentFloorCalls = calls.stream()
-                .filter(i -> i.getTargetFloorNumber() == currentFloorNumber)
+                .filter(i -> i.getTargetFloorNumber() == currentFloorNumber.get())
                 .collect(Collectors.toList());
         hasExecutedCalls = calls.removeAll(currentFloorCalls);
         callLock.unlock();
@@ -491,45 +547,41 @@ public class Elevator implements Runnable, Interruptible {
 
         turnOn();
 
-        try {
-            while (isRunning) {
-                callLock.lock();
-                if (calls.isEmpty()) {
-                    callLock.unlock();
-                    stop();
-                } else {
-                    hasExecutedCalls = removeExecutedCalls();
-                    currentCallFloorNumber = calls.isEmpty()
-                            ? currentFloorNumber
-                            : calls.get(0).getTargetFloorNumber();
+        while (isRunning) {
+            callLock.lock();
+            if (calls.isEmpty()) {
+                callLock.unlock();
+                stop();
+            } else {
+                hasExecutedCalls = removeExecutedCalls();
+                currentCallFloorNumber = calls.isEmpty()
+                        ? currentFloorNumber.get()
+                        : calls.get(0).getTargetFloorNumber();
 
-                    callLock.unlock();
+                callLock.unlock();
 
-                    areWaitingPeopleOnThisFloor = checkFloor();
+                areWaitingPeopleOnThisFloor = checkFloor();
 
-                    if (hasExecutedCalls || areWaitingPeopleOnThisFloor) {
-                        openDoor();
-                        load();
-                        closeDoor();
-                    } else if (currentCallFloorNumber > currentFloorNumber) {
-                        goUp();
-                    } else if (currentCallFloorNumber < currentFloorNumber) {
-                        goDown();
-                    }
+                if (hasExecutedCalls || areWaitingPeopleOnThisFloor) {
+                    openDoor();
+                    load();
+                    closeDoor();
+                } else if (currentCallFloorNumber > currentFloorNumber.get()) {
+                    goUp();
+                } else if (currentCallFloorNumber < currentFloorNumber.get()) {
+                    goDown();
                 }
             }
-        } catch (RuntimeException exception) {
-            log.error(exception.getMessage());
-            log.error(exception.getCause().getMessage());
-        } finally {
-            turnOff();
-            end();
         }
+
+        turnOff();
+        end();
+
     }
 
     @Override
     public String toString() {
         return String.format("State: %s; Direction: %s; Free space: %s; PeopleDelivered: %d; Calls: %s; Passengers: %s; "
-                , getState(), getDirection(), getFreeSpace(), numberOfDeliveredPeople, getCalls(), getPassengers());
+                , getState(), getDirection(), getFreeSpace(), numberOfDeliveredPeople.get(), getCalls(), getPassengers());
     }
 }

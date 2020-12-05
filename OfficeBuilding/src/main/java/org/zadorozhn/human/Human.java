@@ -9,8 +9,8 @@ import org.zadorozhn.building.state.Direction;
 import static com.google.common.base.Preconditions.*;
 
 @Getter
-@EqualsAndHashCode
 @ToString
+@EqualsAndHashCode
 public class Human {
     public static final int MIN_WEIGHT = 10;
     public static final int MAX_WEIGHT = 200;

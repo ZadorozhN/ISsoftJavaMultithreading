@@ -1,7 +1,6 @@
 package org.zadorozhn.util;
 
 import lombok.Getter;
-import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.zadorozhn.building.Building;
 import org.zadorozhn.building.state.Direction;
@@ -47,7 +46,7 @@ public class UserInterface extends Thread implements Interruptible {
         System.out.print("\033[H\033[2J");
         System.out.flush();
 
-        String color = ANSI_WHITE;
+        String color;
         System.out.printf("Delivered: %s\n", StatisticsHolder.getInstance().getNumberOfDeliveredPeople());
         System.out.printf("Generated: %s\n", StatisticsHolder.getInstance().getNumberOfGeneratedPeople());
         System.out.printf("Floors passed: %s\n", StatisticsHolder.getInstance().getNumberOfPassedFloors());
@@ -73,6 +72,9 @@ public class UserInterface extends Thread implements Interruptible {
                             break;
                         case END:
                             color = ANSI_YELLOW;
+                            break;
+                        default:
+                            color = ANSI_WHITE;
                             break;
                     }
                     System.out.printf(color + "|%d%4s|" + ANSI_RESET,
@@ -104,13 +106,23 @@ public class UserInterface extends Thread implements Interruptible {
         isRunning = true;
     }
 
-    @SneakyThrows
     @Override
     public void run(){
         turnOn();
-        while (isRunning){
-            TimeUnit.MILLISECONDS.sleep(DEFAULT_OPERATION_TIME - renderingSpeed);
+        while (isRunning && !isInterrupted()){
+            waitForOperation();
             printBuilding();
+        }
+    }
+
+    private void waitForOperation(){
+        try {
+            TimeUnit.MILLISECONDS.sleep(DEFAULT_OPERATION_TIME - renderingSpeed);
+        } catch (InterruptedException exception){
+            log.error("user interface cannot wait, cause it was interrupted");
+            log.error(exception.getMessage());
+
+            Thread.currentThread().interrupt();
         }
     }
 }
